@@ -12,6 +12,8 @@
 #include "menu.hpp"
 #include "config.hpp"
 #include "auth.hpp"
+#include "login.hpp"
+#include <filesystem>
 
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -56,43 +58,22 @@ static void entity_thread_fn(EntityCache& cache,
     }
 }
 
-static bool show_login(Config& cfg, Auth& auth, AuthInfo& info_out) {
-    // Simple console or ImGui login before overlay init
-    // For overlay-integrated login: show ImGui window before ESP is active
-    char key_buf[256]{};
-    strncpy_s(key_buf, cfg.saved_key, sizeof(key_buf)-1);
-
-    // If saved key present, validate immediately
-    if (key_buf[0]) {
-        auto info = auth.validate_online(key_buf);
-        if (info.result == AuthResult::OK) {
-            info_out = info;
-            return true;
-        }
-    }
-    // Otherwise prompt (simplified — in real build, show ImGui login window)
-    // This blocks until valid key or exit
-    // TODO: integrate into overlay as pre-ESP modal window
-    return false;
-}
-
 int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     // ── Anti-debug ──────────────────────────────────────────────────────────
     anti_debug::run();
 
     // ── Config ──────────────────────────────────────────────────────────────
+    wchar_t exe_path[MAX_PATH]{};
+    if (GetModuleFileNameW(nullptr, exe_path, MAX_PATH))
+        std::filesystem::current_path(std::filesystem::path(exe_path).parent_path());
     Config cfg;
     cfg.load("configs/default.hbc");
 
     // ── Auth ─────────────────────────────────────────────────────────────────
     Auth    auth;
     AuthInfo auth_info;
-    auth_info = auth.validate_online(cfg.saved_key);
-    if (auth_info.result != AuthResult::OK) {
-        // Show error + prompt — simplified: exit
-        MessageBoxW(nullptr, L"Invalid key or expired.", L"HillBlack", MB_ICONERROR);
-        return 1;
-    }
+    if (!show_login(cfg, auth, auth_info)) return 0;
+    cfg.menu_open = true;
 
     // ── Wait for CS2 ─────────────────────────────────────────────────────────
     Memory mem;
@@ -171,7 +152,7 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         misc.update(cache, cfg, &mem);
 
         // Menu
-        if (cfg.menu_open && !menu.want_capture_mouse()) {
+        if (cfg.menu_open) {
             bool running = g_running.load();
             menu.render(cfg, auth_info, running);
             if (!running) g_running.store(false);

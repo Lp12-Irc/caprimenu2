@@ -1,5 +1,6 @@
 // language: C++20, file: auth.cpp, target: Windows 11 x64, MSVC
 #include "auth.hpp"
+#include "auth_local.hpp"
 #include "string_enc.hpp"
 #include <Windows.h>
 #include <winhttp.h>
@@ -56,6 +57,7 @@ std::string Auth::http_post(const std::wstring& host, const std::wstring& path,
                                     WINHTTP_NO_PROXY_NAME,
                                     WINHTTP_NO_PROXY_BYPASS, 0);
     if (!session) return {};
+    WinHttpSetTimeouts(session, 5000, 5000, 5000, 5000);
 
     HINTERNET conn = WinHttpConnect(session, host.c_str(),
                                     INTERNET_DEFAULT_HTTPS_PORT, 0);
@@ -95,6 +97,7 @@ std::string Auth::http_post(const std::wstring& host, const std::wstring& path,
 }
 
 AuthInfo Auth::validate_online(const std::string& key) {
+    if (local_auth_mode()) return validate_local_key(key, get_hwid());
     AuthInfo info;
     info.hwid = get_hwid();
 
@@ -129,6 +132,7 @@ AuthInfo Auth::validate_online(const std::string& key) {
 }
 
 bool Auth::revalidate(const std::string& key, const std::string& hwid) {
+    if (local_auth_mode()) return validate_local_key(key, hwid).result == AuthResult::OK;
     auto host = ENC("api.hillblack.cc").decrypt();
     std::wstring whost(host.begin(), host.end());
     std::string body = "{\"key\":\"" + key + "\",\"hwid\":\"" + hwid + "\"}";

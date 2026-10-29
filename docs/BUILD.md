@@ -12,6 +12,6 @@ O script copia também as licenças das dependências para `dist/licenses/`.
 
 Esta etapa acrescenta o build e corrige erros de compilação encontrados nos fontes. A compilação não valida os offsets do jogo, a integração com a API ou os recursos em execução.
 
-O código recebido carrega `configs/default.hbc` relativo ao diretório de trabalho e exige uma chave de licença válida no serviço de autenticação configurado em `auth.cpp`. A interface para digitar a chave ainda não está implementada. Sem essa configuração, o executável não inicia o fluxo principal com sucesso.
+O código recebido carrega `configs/default.hbc` relativo ao diretório de trabalho e exige uma chave de licença válida no serviço de autenticação configurado em `auth.cpp`. Ao iniciar, uma janela permite informar a key e tentar novamente em caso de falha. Após a validação online, a key é salva e o programa aguarda o CS2 para abrir o menu principal. As chaves existentes apenas no banco local do painel precisam estar também no banco usado pela API.
 
 Não foram removidas verificações de licença nem executadas chamadas à API durante a compilação.
