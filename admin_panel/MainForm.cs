@@ -20,7 +20,7 @@ public class MainForm : Form {
         Size = new Size(900, 600);
         BackColor = Color.FromArgb(18, 18, 18);
         ForeColor = Color.WhiteSmoke;
-        _db = new Database("hillblack.db");
+        _db = new Database(System.IO.Path.Combine(AppContext.BaseDirectory, "hillblack.db"));
         _db.Init();
         BuildLoginPanel();
         BuildMainPanel();

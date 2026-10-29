@@ -171,8 +171,11 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         misc.update(cache, cfg, &mem);
 
         // Menu
-        if (cfg.menu_open && !menu.want_capture_mouse())
-            menu.render(cfg, auth_info, g_running.load() ? g_running.load() : false);
+        if (cfg.menu_open && !menu.want_capture_mouse()) {
+            bool running = g_running.load();
+            menu.render(cfg, auth_info, running);
+            if (!running) g_running.store(false);
+        }
 
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

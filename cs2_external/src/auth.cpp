@@ -24,7 +24,7 @@ static std::string jfield(const std::string& json, const std::string& key) {
 }
 
 std::string Auth::get_hwid() {
-    // Volume serial of C:\
+    // Volume serial of the C: drive.
     DWORD serial = 0;
     GetVolumeInformationW(L"C:\\", nullptr, 0, &serial, nullptr, nullptr, nullptr, 0);
 

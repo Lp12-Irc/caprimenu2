@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include <cmath>
 #include <cstring>
+#include <algorithm>
 
 // ─── World → Screen ─────────────────────────────────────────────────────────
 Scr Esp::w2s(const Vec3& w, const Matrix4x4& vm, int sw, int sh) const {
@@ -159,9 +160,9 @@ void Esp::draw_text_info(ImDrawList* dl, const PlayerEnt& p,
     float cx  = head.x;
     float ytop = head.y - box_h * 0.05f - 14.f;
 
-    if (p.player_name[0]) {
-        dl->AddText({cx - ImGui::CalcTextSize(p.player_name).x * 0.5f, ytop - 13.f},
-                    IM_COL32(255,255,255,230), p.player_name);
+    if (p.name[0]) {
+        dl->AddText({cx - ImGui::CalcTextSize(p.name).x * 0.5f, ytop - 13.f},
+                    IM_COL32(255,255,255,230), p.name);
         ytop -= 13.f;
     }
 
