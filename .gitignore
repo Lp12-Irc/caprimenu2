@@ -1,0 +1,39 @@
+# Build e IDE
+.vs/
+.idea/
+build/
+out/
+bin/
+obj/
+x64/
+Debug/
+Release/
+*.user
+*.suo
+*.obj
+*.pdb
+*.ilk
+*.exe
+*.dll
+*.lib
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Dados e credenciais locais
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+*.pfx
+*.hbc
+*.log
