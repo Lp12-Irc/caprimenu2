@@ -1,0 +1,19 @@
+{
+  "name": "de_anubis",
+  "pos_x": -2796.0,
+  "pos_y": 3328.0,
+  "scale": 5.22,
+  "reference_size": 1024,
+  "image": "de_anubis_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "de_anubis_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/de_anubis.txt",
+  "source_sha256": "f83755ed8a85365923ac565d3fbd2ab1391e75d8b89cfd759da9214bf80e9fff"
+}

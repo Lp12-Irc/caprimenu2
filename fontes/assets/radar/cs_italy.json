@@ -1,0 +1,19 @@
+{
+  "name": "cs_italy",
+  "pos_x": -2647.0,
+  "pos_y": 2592.0,
+  "scale": 4.6,
+  "reference_size": 1024,
+  "image": "cs_italy_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "cs_italy_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/cs_italy.txt",
+  "source_sha256": "4306c58dcb405f4f3678d34d1ff288349a9316a8f466915306bdce231ebc4381"
+}

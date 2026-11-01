@@ -1,0 +1,19 @@
+{
+  "name": "workshop_preview",
+  "pos_x": -2071.0,
+  "pos_y": 711.0,
+  "scale": 1.699219,
+  "reference_size": 1024,
+  "image": "workshop_preview_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "workshop_preview_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/workshop_preview.txt",
+  "source_sha256": "87f8d3756cfc971198eef9f7cd57b62b7e6cfa2612982dc1a0c1a25f4d0c5edf"
+}

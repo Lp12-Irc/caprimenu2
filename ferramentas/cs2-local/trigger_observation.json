@@ -1,0 +1,542 @@
+[
+  {
+    "sample": 0,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 132,
+    "target_team": 3,
+    "target_health": 100
+  },
+  {
+    "sample": 1,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 2,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 3,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 4,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 5,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 6,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 7,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 8,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 9,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 10,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 11,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 12,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 13,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 14,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 15,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 16,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 17,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 18,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 19,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 20,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 204,
+    "target_team": 2,
+    "target_health": 100
+  },
+  {
+    "sample": 21,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 204,
+    "target_team": 2,
+    "target_health": 100
+  },
+  {
+    "sample": 22,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 204,
+    "target_team": 2,
+    "target_health": 100
+  },
+  {
+    "sample": 23,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 271,
+    "target_team": 2,
+    "target_health": 100
+  },
+  {
+    "sample": 24,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 271,
+    "target_team": 2,
+    "target_health": 100
+  },
+  {
+    "sample": 25,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 271,
+    "target_team": 2,
+    "target_health": 44
+  },
+  {
+    "sample": 26,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 271,
+    "target_team": 2,
+    "target_health": 44
+  },
+  {
+    "sample": 27,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 271,
+    "target_team": 2,
+    "target_health": 44
+  },
+  {
+    "sample": 28,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 271,
+    "target_team": 2,
+    "target_health": 44
+  },
+  {
+    "sample": 29,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 30,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 31,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 32,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 204,
+    "target_team": 2,
+    "target_health": 78
+  },
+  {
+    "sample": 33,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": 204,
+    "target_team": 2,
+    "target_health": 78
+  },
+  {
+    "sample": 34,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 35,
+    "alt": false,
+    "game_foreground": true,
+    "health": 100,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 36,
+    "alt": false,
+    "game_foreground": true,
+    "health": 82,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 37,
+    "alt": false,
+    "game_foreground": true,
+    "health": 82,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 38,
+    "alt": false,
+    "game_foreground": true,
+    "health": 67,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 39,
+    "alt": false,
+    "game_foreground": true,
+    "health": 53,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 40,
+    "alt": false,
+    "game_foreground": true,
+    "health": 53,
+    "crosshair_index": 202,
+    "target_team": 2,
+    "target_health": 100
+  },
+  {
+    "sample": 41,
+    "alt": false,
+    "game_foreground": true,
+    "health": 38,
+    "crosshair_index": 202,
+    "target_team": 2,
+    "target_health": 100
+  },
+  {
+    "sample": 42,
+    "alt": false,
+    "game_foreground": true,
+    "health": 23,
+    "crosshair_index": 202,
+    "target_team": 2,
+    "target_health": 100
+  },
+  {
+    "sample": 43,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 44,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 45,
+    "alt": false,
+    "game_foreground": false,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 46,
+    "alt": false,
+    "game_foreground": false,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 47,
+    "alt": false,
+    "game_foreground": false,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 48,
+    "alt": false,
+    "game_foreground": false,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 49,
+    "alt": true,
+    "game_foreground": false,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 50,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 51,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 52,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 53,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 54,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 55,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 56,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 57,
+    "alt": false,
+    "game_foreground": true,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 58,
+    "alt": true,
+    "game_foreground": false,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  },
+  {
+    "sample": 59,
+    "alt": false,
+    "game_foreground": false,
+    "health": 0,
+    "crosshair_index": -1,
+    "target_team": 0,
+    "target_health": 0
+  }
+]

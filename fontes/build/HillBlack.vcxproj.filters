@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\aimbot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\auth.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\auth_local.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\brand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\entities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\esp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\login.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\memory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\menu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\misc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\overlay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\radar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\leona\Downloads\Capri-Completo\fontes\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\login.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="C:\Users\leona\Downloads\Capri-Completo\fontes\cs2_external\src\brand.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{99725535-A18C-3F08-8A60-A0F74BC4EE8E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,11 @@
+{
+  "build_number": 14194,
+  "dump_timestamp": "2026-10-31T16:30:19.994388300+00:00",
+  "steam_build_id": "26334290",
+  "client_sha256": "d618bbf8e6afb36baa09b3a282035996a88300458c55d2aa5cb81f0495c0ec54",
+  "client_pe_timestamp": 1793391492,
+  "client_image_size": 43655168,
+  "source": "https://github.com/a2x/cs2-dumper",
+  "source_commit": "21ee85107074fdf0347dc8afd4a8c3dd8d2398e2",
+  "method": "Local cs2-dumper extraction from running process using native read-only memory access; entity and bone layouts checked against live controller and pawn references."
+}

@@ -1,0 +1,30 @@
+{
+  "name": "de_ancient_v2",
+  "pos_x": -2953.0,
+  "pos_y": 2164.0,
+  "scale": 5.0,
+  "reference_size": 1024,
+  "image": "de_ancient_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "de_ancient_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [
+    {
+      "label": "A",
+      "x": 0.31,
+      "y": 0.25
+    },
+    {
+      "label": "B",
+      "x": 0.8,
+      "y": 0.4
+    }
+  ],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/de_ancient_v2.txt",
+  "source_sha256": "f6b420a983e2702c3c0d903a901483b6bc61fcf5eef2b6fb62da485ba93eb3c1"
+}

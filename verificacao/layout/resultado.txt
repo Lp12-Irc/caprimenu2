@@ -1,0 +1,2 @@
+Interface reorganizada com sidebar, avatar existente, paleta preta/rosa, paginas Aimbot/Triggerbot/Visuais/Recuo/Utilitarios/Configuracoes/Conta, switches, cards, previa do FOV e rodape com salvar/restaurar. Sem skins. Recursos existentes preservados; filtros sem implementacao nao foram inventados.
+Validacao: build Release, quatro testes CTest e overlay_test passaram. Captura DX11 em verificacao/layout/painel.png inspecionada. Backup em backup-layout. Perfil existente preservado na instalacao.

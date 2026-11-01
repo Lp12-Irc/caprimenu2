@@ -1,0 +1,12 @@
+{
+  "client.dll": {
+    "dwEntityList": 41020200,
+    "dwGameEntitySystem": 41020200,
+    "dwLocalPlayerController": 39064568,
+    "dwViewMatrix": 39252432,
+    "dwGlobalVars": 35864840,
+    "dwPlantedC4": 38599520
+  },
+  "client_sha256": "d618bbf8e6afb36baa09b3a282035996a88300458c55d2aa5cb81f0495c0ec54",
+  "signature_source": "a2x/cs2-dumper@21ee85107074fdf0347dc8afd4a8c3dd8d2398e2/src/analysis/offsets.rs"
+}

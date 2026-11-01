@@ -1,0 +1,13 @@
+Test project C:/Users/leona/Downloads/Capri-Completo/fontes/build
+    Start 1: entities
+1/4 Test #1: entities .........................   Passed    0.28 sec
+    Start 2: radar
+2/4 Test #2: radar ............................   Passed    2.40 sec
+    Start 3: auth_local
+3/4 Test #3: auth_local .......................   Passed    0.45 sec
+    Start 4: config
+4/4 Test #4: config ...........................   Passed    0.26 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   3.48 sec

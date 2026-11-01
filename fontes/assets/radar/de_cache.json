@@ -1,0 +1,30 @@
+{
+  "name": "de_cache",
+  "pos_x": -2000.0,
+  "pos_y": 3250.0,
+  "scale": 5.5,
+  "reference_size": 1024,
+  "image": "de_cache_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "de_cache_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [
+    {
+      "label": "A",
+      "x": 0.325,
+      "y": 0.26
+    },
+    {
+      "label": "B",
+      "x": 0.345,
+      "y": 0.79
+    }
+  ],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/de_cache.txt",
+  "source_sha256": "4344e0364bc9ec31f9f3fc04fe24aacb465e5252f8c173e661cebec586b54c0d"
+}

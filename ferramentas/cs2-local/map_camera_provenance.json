@@ -1,0 +1,20 @@
+{
+  "engine_build": 14194,
+  "global_names": {
+    "0x178": "",
+    "0x180": "maps/de_dust2.vpk",
+    "0x188": "de_dust2"
+  },
+  "local_collision": {
+    "m_vecMins": [
+      -16.0,
+      -16.0,
+      0.0
+    ],
+    "m_vecMaxs": [
+      16.0,
+      16.0,
+      72.0
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "de_vertigo",
+  "pos_x": -3168.0,
+  "pos_y": 1762.0,
+  "scale": 4.0,
+  "reference_size": 1024,
+  "image": "de_vertigo_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "de_vertigo_radar_psd.png",
+      "min_z": 11700.0,
+      "max_z": 20000.0
+    },
+    {
+      "name": "lower",
+      "image": "de_vertigo_lower_radar_psd.png",
+      "min_z": -10000.0,
+      "max_z": 11700.0
+    }
+  ],
+  "landmarks": [
+    {
+      "label": "A",
+      "x": 0.705,
+      "y": 0.585
+    },
+    {
+      "label": "B",
+      "x": 0.222,
+      "y": 0.223
+    }
+  ],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/de_vertigo.txt",
+  "source_sha256": "61cd5156d443c10c898283dfb98cdfaf5befb2a24afa18e27f76b89b4d908541"
+}

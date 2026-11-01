@@ -1,0 +1,1 @@
+PASS: input styles, hit tests, ImGui text events, client alignment, DX11 resize, render.

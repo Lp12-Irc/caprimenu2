@@ -1,0 +1,19 @@
+{
+  "name": "cs_office",
+  "pos_x": -1838.0,
+  "pos_y": 1858.0,
+  "scale": 4.1,
+  "reference_size": 1024,
+  "image": "cs_office_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "cs_office_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/cs_office.txt",
+  "source_sha256": "2f40310bad3ba597d1a25d73d43df009af3826f19c3f0871f7c57755c6d50478"
+}

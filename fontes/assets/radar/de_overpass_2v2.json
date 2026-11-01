@@ -1,0 +1,30 @@
+{
+  "name": "de_overpass_2v2",
+  "pos_x": -4831.0,
+  "pos_y": 1781.0,
+  "scale": 5.2,
+  "reference_size": 1024,
+  "image": "de_overpass_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "de_overpass_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [
+    {
+      "label": "A",
+      "x": 0.55,
+      "y": 0.23
+    },
+    {
+      "label": "B",
+      "x": 0.7,
+      "y": 0.31
+    }
+  ],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/de_overpass_2v2.txt",
+  "source_sha256": "23b44305d79a15dc9feea71528a7015d6f3612044a8367f29b20c65aec2e7897"
+}

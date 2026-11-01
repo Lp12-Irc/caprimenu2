@@ -1,0 +1,25 @@
+{
+  "name": "ar_baggage",
+  "pos_x": -1316.0,
+  "pos_y": 1288.0,
+  "scale": 2.539062,
+  "reference_size": 1024,
+  "image": "ar_baggage_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "ar_baggage_radar_psd.png",
+      "min_z": -5.0,
+      "max_z": 10000.0
+    },
+    {
+      "name": "lower",
+      "image": "ar_baggage_lower_radar_psd.png",
+      "min_z": -10000.0,
+      "max_z": -5.0
+    }
+  ],
+  "landmarks": [],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/ar_baggage.txt",
+  "source_sha256": "72c88c5037edd778e254f3e8b15743e0c6eb912fd9cac1a774862c094d3f0ed3"
+}

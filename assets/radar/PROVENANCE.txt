@@ -1,0 +1,4 @@
+Extracted from the installed CS2 Steam build 26334290, engine build 14194.
+Valve overview coordinates and radar images; extracted with Source 2 Viewer CLI 20.1.
+Tool source: https://github.com/ValveResourceFormat/ValveResourceFormat
+Map images are Valve game assets used locally by this installation.

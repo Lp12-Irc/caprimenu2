@@ -1,0 +1,19 @@
+{
+  "name": "ar_shoots",
+  "pos_x": -1368.0,
+  "pos_y": 1952.0,
+  "scale": 2.6875,
+  "reference_size": 1024,
+  "image": "ar_shoots_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "ar_shoots_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/ar_shoots.txt",
+  "source_sha256": "679d48f96d4b23c17c9ee55256c3ed574ee5c04eaf1e835ac4330fa5a3e4c66d"
+}

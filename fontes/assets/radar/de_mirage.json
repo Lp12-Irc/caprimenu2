@@ -1,0 +1,30 @@
+{
+  "name": "de_mirage",
+  "pos_x": -3230.0,
+  "pos_y": 1713.0,
+  "scale": 5.0,
+  "reference_size": 1024,
+  "image": "de_mirage_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "de_mirage_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [
+    {
+      "label": "A",
+      "x": 0.54,
+      "y": 0.76
+    },
+    {
+      "label": "B",
+      "x": 0.23,
+      "y": 0.28
+    }
+  ],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/de_mirage.txt",
+  "source_sha256": "f201fd608d6ea0bd091920620a4f74e97197d26caf36f133875b58d5ba1d77fe"
+}

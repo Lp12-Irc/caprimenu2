@@ -1,0 +1,64 @@
+{
+  "client_sha256": "d618bbf8e6afb36baa09b3a282035996a88300458c55d2aa5cb81f0495c0ec54",
+  "build": 14194,
+  "CGlobalVars_curtime": "0x30",
+  "CPlantedC4_blow": "0x12b8",
+  "evidence": [
+    {
+      "global_load_rva": "0xd179c2",
+      "clock_offset": "0x30",
+      "instructions": [
+        "0xd179c2: mov rax, qword ptr [rip + 0x151c73f]",
+        "0xd179c9: subss xmm0, dword ptr [rax + 0x30]",
+        "0xd179ce: jmp 0xd17a3f",
+        "0xd179d0: mov rcx, qword ptr [rip + 0x18519a1]",
+        "0xd179d7: cmp byte ptr [rcx + 0x8c7], 0",
+        "0xd179de: je 0xd17a33",
+        "0xd179e0: mov rbx, qword ptr [rip + 0x17b8179]",
+        "0xd179e7: test rbx, rbx",
+        "0xd179ea: je 0xd17a0d",
+        "0xd179ec: lea rcx, [rbx + 0x12e0]",
+        "0xd179f3: call 0xd27aa0",
+        "0xd179f8: test rax, rax",
+        "0xd179fb: je 0xd17a0d",
+        "0xd179fd: lea rdi, [rip + 0xf938f0]",
+        "0xd17a04: lea rcx, [rbx + 0x12d8]",
+        "0xd17a0b: jmp 0xd179bd",
+        "0xd17a0d: lea rdi, [rip + 0xf9369c]",
+        "0xd17a14: test rbx, rbx",
+        "0xd17a17: je 0xd17a22",
+        "0xd17a19: lea rcx, [rbx + 0x12b8]",
+        "0xd17a20: jmp 0xd179bd",
+        "0xd17a22: mov rax, qword ptr [rip + 0x17a9217]"
+      ]
+    },
+    {
+      "global_load_rva": "0xd1a3a4",
+      "clock_offset": "0x30",
+      "instructions": [
+        "0xd1a3a4: mov rax, qword ptr [rip + 0x1519d5d]",
+        "0xd1a3ab: lea rcx, [rbx + 0x12b8]",
+        "0xd1a3b2: movss xmm6, dword ptr [rax + 0x30]",
+        "0xd1a3b7: call 0x161880",
+        "0xd1a3bc: mov ebp, dword ptr [rbx + 0x12e0]",
+        "0xd1a3c2: movaps xmm8, xmm0",
+        "0xd1a3c6: subss xmm8, xmm6",
+        "0xd1a3cb: cmp ebp, -1",
+        "0xd1a3ce: je 0xd1a53e",
+        "0xd1a3d4: mov r15, qword ptr [rip + 0x1659815]",
+        "0xd1a3db: test r15, r15",
+        "0xd1a3de: je 0xd1a53e",
+        "0xd1a3e4: cmp ebp, -2",
+        "0xd1a3e7: je 0xd1a417",
+        "0xd1a3e9: mov eax, ebp",
+        "0xd1a3eb: and eax, 0x7fff",
+        "0xd1a3f0: mov ecx, eax",
+        "0xd1a3f2: shr rax, 9",
+        "0xd1a3f6: mov rdx, qword ptr [r15 + rax*8]",
+        "0xd1a3fa: test rdx, rdx",
+        "0xd1a3fd: je 0xd1a417",
+        "0xd1a3ff: and ecx, 0x1ff"
+      ]
+    }
+  ]
+}

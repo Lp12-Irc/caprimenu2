@@ -1,0 +1,19 @@
+// language: RC / file: login.rc / runtime: Win32 / target: Windows x64
+#include <windows.h>
+101 DIALOGEX 0, 0, 420, 300
+STYLE DS_SETFONT | DS_CENTER | DS_MODALFRAME | WS_POPUP | WS_SYSMENU
+CAPTION "Capri - Acesso"
+FONT 11, "Segoe UI"
+BEGIN
+    LTEXT "CAPRI", 1003, 59, 19, 250, 15
+    LTEXT "SEU WORKSPACE. SEU CONTROLE.", 1008, 59, 36, 280, 12
+    CONTROL "X", 1007, "BUTTON", BS_OWNERDRAW | WS_TABSTOP, 375, 16, 24, 25
+    LTEXT "Entre no seu workspace.", 1004, 23, 72, 375, 28
+    LTEXT "Use sua chave de acesso para conectar este dispositivo.", 1005, 24, 108, 371, 18
+    LTEXT "CHAVE DE ACESSO", 1006, 24, 132, 370, 11
+    CONTROL "", 1001, "EDIT", ES_AUTOHSCROLL | WS_TABSTOP, 31, 155, 356, 17
+    LTEXT "Cole sua chave com Ctrl+V para continuar.", 1002, 24, 191, 372, 31
+    CONTROL "Entrar no Capri", IDOK, "BUTTON", BS_OWNERDRAW | WS_TABSTOP, 24, 233, 262, 29
+    CONTROL "Cancelar", IDCANCEL, "BUTTON", BS_OWNERDRAW | WS_TABSTOP, 296, 233, 100, 29
+    LTEXT "CAPRI  /  CLIENTE WINDOWS", 1009, 24, 281, 372, 12
+END

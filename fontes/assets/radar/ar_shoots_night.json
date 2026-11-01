@@ -1,0 +1,19 @@
+{
+  "name": "ar_shoots_night",
+  "pos_x": -1368.0,
+  "pos_y": 1952.0,
+  "scale": 2.6875,
+  "reference_size": 1024,
+  "image": "ar_shoots_night_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "ar_shoots_night_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/ar_shoots_night.txt",
+  "source_sha256": "65e55b0ec3cf60a9e63b7cb09cf51ee1c5028f7ab2af707cacfbfe2cfa9804bf"
+}

@@ -1,0 +1,16 @@
+{
+  "installed": "C:\\Users\\leona\\Downloads\\Capri-Completo\\Capri.exe",
+  "sha256": "E77E9AC3C3AFC448F2AD5812A0A405707A756625848ACFF9C7BA336AF9AFD136",
+  "source_sha256": "E77E9AC3C3AFC448F2AD5812A0A405707A756625848ACFF9C7BA336AF9AFD136",
+  "backup": "C:\\Users\\leona\\Downloads\\Capri-Completo\\backup-mira-esp-trigger\\Capri.exe",
+  "backup_sha256": "935AFDA5DC99B7A0DC6301ED0CAAA72069AE991FDF908AFEAB9ED12E89AC661E",
+  "engine_build": 14194,
+  "closed_instances": 1,
+  "profile_changes": {
+    "aim_delay_ms": 0.0,
+    "aim_smooth": 2.0,
+    "aim_ads_only": false,
+    "tb_delay_ms": 0.0
+  },
+  "installed_utc": "2026-10-31T17:11:07.3355768+00:00"
+}

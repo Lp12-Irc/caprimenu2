@@ -1,0 +1,30 @@
+{
+  "name": "de_inferno",
+  "pos_x": -2087.0,
+  "pos_y": 3870.0,
+  "scale": 4.9,
+  "reference_size": 1024,
+  "image": "de_inferno_radar_psd.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "de_inferno_radar_psd.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [
+    {
+      "label": "A",
+      "x": 0.81,
+      "y": 0.69
+    },
+    {
+      "label": "B",
+      "x": 0.49,
+      "y": 0.22
+    }
+  ],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/de_inferno.txt",
+  "source_sha256": "ff93b0ff1f6705ccfb4daf3b038dd88ccdf3ca776823667c19782650e94d2c54"
+}

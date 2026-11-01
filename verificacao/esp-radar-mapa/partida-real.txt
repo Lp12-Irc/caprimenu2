@@ -1,0 +1,26 @@
+cache_update_ms=9.077
+build=14194 ready=1 players=10 alive=10 bones=10 weapons=10 utilities=4 observers=0 items=0 sens=1.100 local_health=100 bomb=0 clock=0 remaining=0.00
+named_rigs=10 local_crosshair_target=0
+map=de_dust2
+render_vertices=1390 render_indices=3387
+cache_update_ms=15.756
+build=14194 ready=1 players=10 alive=10 bones=10 weapons=10 utilities=4 observers=0 items=0 sens=1.100 local_health=100 bomb=0 clock=0 remaining=0.00
+named_rigs=10 local_crosshair_target=0
+map=de_dust2
+render_vertices=1390 render_indices=3387
+cache_update_ms=3.058
+build=14194 ready=1 players=10 alive=10 bones=10 weapons=10 utilities=4 observers=0 items=4 sens=1.100 local_health=100 bomb=0 clock=0 remaining=0.00
+named_rigs=10 local_crosshair_target=0
+map=de_dust2
+render_vertices=1390 render_indices=3387
+cache_update_ms=27.912
+build=14194 ready=1 players=10 alive=10 bones=10 weapons=10 utilities=4 observers=0 items=4 sens=1.100 local_health=100 bomb=0 clock=0 remaining=0.00
+named_rigs=10 local_crosshair_target=0
+map=de_dust2
+render_vertices=1618 render_indices=3891
+cache_update_ms=1.556
+build=14194 ready=1 players=10 alive=10 bones=10 weapons=10 utilities=4 observers=0 items=4 sens=1.100 local_health=100 bomb=0 clock=0 remaining=0.00
+named_rigs=10 local_crosshair_target=0
+map=de_dust2
+render_vertices=1842 render_indices=4389
+PASS: live read-only entity, local-player, bone, weapon and projection integration.

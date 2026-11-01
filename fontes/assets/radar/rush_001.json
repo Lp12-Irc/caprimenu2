@@ -1,0 +1,19 @@
+{
+  "name": "rush_001",
+  "pos_x": -11240.0,
+  "pos_y": 9944.0,
+  "scale": 18.910156,
+  "reference_size": 1024,
+  "image": "rush_001_radar_tga.png",
+  "floors": [
+    {
+      "name": "default",
+      "image": "rush_001_radar_tga.png",
+      "min_z": -100000.0,
+      "max_z": 100000.0
+    }
+  ],
+  "landmarks": [],
+  "source": "Installed CS2 pak01_dir.vpk: resource/overviews/rush_001.txt",
+  "source_sha256": "bc476fc6829340daf40c15c078b519d06336bf60bd6b916aba14a11aad398b13"
+}

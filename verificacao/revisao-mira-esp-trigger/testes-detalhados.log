@@ -1,0 +1,61 @@
+Start testing: Oct 31 14:08 Hora oficial do Brasil
+----------------------------------------------------------
+1/3 Testing: entities
+1/3 Test: entities
+Command: "C:/Users/leona/Downloads/Capri-Completo/fontes/build/Release/entities_test.exe"
+Directory: C:/Users/leona/Downloads/Capri-Completo/fontes/build
+"entities" start time: Oct 31 14:08 Hora oficial do Brasil
+Output:
+----------------------------------------------------------
+PASS: handles, chunks, bones, weapons, observers, aim direction/FOV/delay, standalone RCS, trigger deadlines/release, no-flash restoration, stale-data reset.
+<end of output>
+Test time =   0.15 sec
+----------------------------------------------------------
+Test Passed.
+"entities" end time: Oct 31 14:08 Hora oficial do Brasil
+"entities" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/3 Testing: auth_local
+2/3 Test: auth_local
+Command: "C:/Users/leona/Downloads/Capri-Completo/fontes/build/Release/auth_local_test.exe"
+Directory: C:/Users/leona/Downloads/Capri-Completo/fontes/build
+"auth_local" start time: Oct 31 14:08 Hora oficial do Brasil
+Output:
+----------------------------------------------------------
+PASS local mode
+PASS unknown rejected
+PASS revoked rejected
+PASS expired rejected
+PASS bad expiry rejected
+PASS different HWID rejected
+PASS active accepted
+PASS same HWID accepted again
+PASS initial binding persisted
+PASS future expiry accepted
+PASS missing database rejected
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Passed.
+"auth_local" end time: Oct 31 14:08 Hora oficial do Brasil
+"auth_local" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/3 Testing: config
+3/3 Test: config
+Command: "C:/Users/leona/Downloads/Capri-Completo/fontes/build/Release/config_test.exe"
+Directory: C:/Users/leona/Downloads/Capri-Completo/fontes/build
+"config" start time: Oct 31 14:08 Hora oficial do Brasil
+Output:
+----------------------------------------------------------
+PASS: config round-trip, legacy defaults, validation, transactional load/save
+<end of output>
+Test time =   0.30 sec
+----------------------------------------------------------
+Test Passed.
+"config" end time: Oct 31 14:08 Hora oficial do Brasil
+"config" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 31 14:08 Hora oficial do Brasil

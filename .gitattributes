@@ -1,6 +1,2 @@
-* text=auto
-*.cpp text eol=lf
-*.hpp text eol=lf
-*.cs text eol=lf
-*.py text eol=lf
-*.md text eol=lf
+Capri.Admin.exe filter=lfs diff=lfs merge=lfs -text
+ferramentas/source2viewer/Source2Viewer-CLI.exe filter=lfs diff=lfs merge=lfs -text
