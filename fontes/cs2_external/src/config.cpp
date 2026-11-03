@@ -16,23 +16,26 @@ namespace fs = std::filesystem;
 namespace {
 // One field list keeps legacy profile loading and saving symmetrical.
 #define BOOL_FIELDS(X) \
-    X(esp) X(esp_box) X(esp_skeleton) X(esp_snaplines) X(esp_distance) \
-    X(esp_healthbar) X(esp_health_num) X(esp_weapon) X(esp_utilities) X(esp_vischeck) \
-    X(aim) X(aim_ads_only) X(aim_fov_circle) X(silent_aim) X(rcs) X(radar) \
-    X(no_flash) X(crosshair) X(ch_dot) X(triggerbot) X(spectator_list) X(bomb_timer) X(item_esp) X(radar_names)
+    X(esp) X(esp_box) X(esp_body) X(esp_skeleton) X(esp_snaplines) X(esp_distance) \
+    X(esp_healthbar) X(esp_health_num) X(esp_weapon) X(esp_vischeck) \
+    X(aim) X(aim_visibility) X(aim_auto_sens) X(aim_ads_only) X(aim_fov_circle) X(rcs) X(radar) \
+    X(no_flash) X(crosshair) X(ch_dot) X(triggerbot) X(tb_head_only) X(spectator_list) X(bomb_timer) X(item_esp) X(radar_names) X(menu_motion)
 
 #define NUMBER_FIELDS(X) \
-    X(esp_box_style, 0, 2) X(esp_box_thick, 0.5, 4) X(esp_skel_thick, 0.5, 4) \
+    X(display_aspect, 0, 3) X(display_fit, 0, 1) \
+    X(menu_size, 0, 2) X(menu_accent, 0, 4294967295.0) X(menu_background, 0, 4294967295.0) \
+    X(menu_surface, 0, 4294967295.0) X(menu_text, 0, 4294967295.0) X(menu_border, 0, 4294967295.0) \
+    X(esp_player_style, 0, 1) X(esp_box_style, 0, 2) X(esp_box_thick, 0.5, 4) X(esp_skel_thick, 0.5, 4) \
     X(esp_filter, 0, 2) X(esp_max_dist, 0, 1000) \
     X(col_ct, 0, 4294967295.0) X(col_tr, 0, 4294967295.0) \
-    X(col_visible, 0, 4294967295.0) X(col_skeleton, 0, 4294967295.0) \
+    X(col_body, 0, 4294967295.0) X(col_visible, 0, 4294967295.0) X(col_skeleton, 0, 4294967295.0) \
     X(col_snapline, 0, 4294967295.0) X(ch_col, 0, 4294967295.0) \
     X(aim_key, 1, 254) X(aim_bone, 0, 2) X(aim_fov, 1, 45) X(aim_smooth, 1, 15) \
-    X(aim_target, 0, 1) X(aim_sens, 0.1, 5) X(aim_delay_ms, 0, 200) \
-    X(sa_fov, 1, 30) X(sa_bone, 0, 2) X(rcs_intensity, 0.1, 2) \
-    X(radar_x, 0, 100) X(radar_y, 0, 100) X(radar_sz, 80, 600) X(radar_scale, 50, 1000) X(radar_zoom, 1, 4) \
+    X(aim_target, 0, 1) X(aim_max_dist, 5, 500) X(aim_sens, 0.1, 5) X(aim_delay_ms, 0, 200) \
+    X(rcs_intensity, 0.1, 2) \
+    X(radar_x, 0, 100) X(radar_y, 0, 100) X(radar_sz, 80, 600) X(radar_zoom, 1, 4) \
     X(no_flash_max, 0, 50) X(ch_size, 1, 20) X(ch_thick, 0.5, 4) X(ch_gap, 0, 10) \
-    X(tb_key, 1, 254) X(tb_delay_ms, 0, 300) X(tb_release_ms, 10, 100) X(menu_key, 1, 254)
+    X(tb_head_margin, 0.3, 1) X(tb_interval_ms, 0, 500) X(tb_key, 1, 254) X(tb_delay_ms, 0, 300) X(tb_release_ms, 10, 100) X(menu_key, 1, 254)
 
 template<typename T>
 void validate_number(const char* name, T value, double minimum, double maximum) {
@@ -87,11 +90,11 @@ bool Config::save(const std::string& path, std::string* error) const {
 #undef SAVE_NUMBER
         const auto key_end = static_cast<const char*>(std::memchr(saved_key, '\0', sizeof(saved_key)));
         if (!key_end) throw std::runtime_error("Chave salva invalida.");
-        j["saved_key"] = std::string(saved_key, key_end);
+        j["saved_key"] = ""; // Credentials are stored separately with Windows DPAPI.
         std::string bytes = j.dump(2);
         transform(bytes);
 
-        const fs::path destination = fs::absolute(fs::u8path(path));
+        const fs::path destination = fs::absolute(fs::path(std::u8string(path.begin(),path.end())));
         fs::create_directories(destination.parent_path());
         wchar_t temp_name[MAX_PATH]{};
         if (!GetTempFileNameW(destination.parent_path().c_str(), L"hbc", 0, temp_name))
@@ -118,7 +121,7 @@ bool Config::save(const std::string& path, std::string* error) const {
 bool Config::load(const std::string& path, std::string* error) {
     if (error) error->clear();
     try {
-        std::ifstream in(fs::u8path(path), std::ios::binary | std::ios::ate);
+        std::ifstream in(fs::path(std::u8string(path.begin(),path.end())), std::ios::binary | std::ios::ate);
         if (!in) throw std::runtime_error("Nao foi possivel abrir o perfil.");
         const auto length = in.tellg();
         if (length <= 0 || length > 1024 * 1024)
@@ -143,6 +146,7 @@ bool Config::load(const std::string& path, std::string* error) {
 #define LOAD_NUMBER(name, lo, hi) load_number(j, #name, next.name, lo, hi);
         NUMBER_FIELDS(LOAD_NUMBER)
 #undef LOAD_NUMBER
+        if(!j.contains("aim_visibility"))next.aim_target=1; // Legacy profiles migrate to nearest eligible target.
         const auto key = j.value("saved_key", std::string{});
         if (key.size() >= sizeof(next.saved_key) || key.find('\0') != std::string::npos)
             throw std::runtime_error("Chave salva invalida.");

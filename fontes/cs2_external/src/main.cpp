@@ -10,10 +10,15 @@
 #include "aimbot.hpp"
 #include "misc.hpp"
 #include "menu.hpp"
+#include "version.hpp"
 #include "brand.hpp"
 #include "config.hpp"
+#include "profile_store.hpp"
 #include "auth.hpp"
 #include "login.hpp"
+#include "credentials.hpp"
+#include "input_frame.hpp"
+#include "render_policy.hpp"
 #include <filesystem>
 
 #include "imgui.h"
@@ -31,8 +36,11 @@ static std::atomic<bool> g_running{true};
 static std::mutex g_stop_mutex;
 static std::condition_variable g_stop_cv;
 static std::atomic<std::shared_ptr<const EntityCache>> g_snapshot;
-struct InputFrame { Config cfg; int width=0, height=0; bool enabled=false; };
-static std::atomic<std::shared_ptr<const InputFrame>> g_input_frame;
+static InputFrames g_input_frame;
+static std::atomic<std::shared_ptr<const AuthInfo>> g_auth_state;
+static std::atomic<std::shared_ptr<const std::string>> g_session_key;
+static std::atomic<bool> g_auth_retry{false};
+static std::atomic<ULONGLONG> g_auth_deadline{0};
 static std::atomic<bool> g_write_available{false};
 static std::atomic<Misc::TriggerState> g_trigger_state{Misc::TriggerState::Paused};
 
@@ -40,17 +48,30 @@ static void entity_thread_fn(EntityCache& cache,
                               const std::atomic<bool>& running) {
     PollTimer timer;
     while (running.load()) {
-        CacheOptions options;
+        CacheOptions options;options.throttle_details=true;
         const auto frame=g_input_frame.load();
+        const auto access=g_auth_state.load();
+        if((frame && frame->blocked) || !access || !auth_grant_active(*access,input_clock_ms(),g_auth_deadline.load())){timer.wait(100);continue;}
+        if(!frame || !frame->width || !frame->height || !frame->cfg.needs_entities()) {timer.wait(80);continue;}
         if (frame) {
-            options.bones=frame->cfg.esp || frame->cfg.aim;
-            options.inventory=frame->cfg.esp && frame->cfg.esp_utilities;
+            const bool aiming=frame->enabled && !frame->cfg.menu_open && frame->cfg.aim &&
+                (GetAsyncKeyState(frame->cfg.aim_key)&0x8000) &&
+                (!frame->cfg.aim_ads_only || (GetAsyncKeyState(VK_RBUTTON)&0x8000));
+            const bool head_trigger=frame->enabled && !frame->cfg.menu_open && frame->cfg.triggerbot &&
+                frame->cfg.tb_head_only && (GetAsyncKeyState(frame->cfg.tb_key)&0x8000);
+            options.bones=frame->cfg.esp || aiming || head_trigger;
+            options.inventory=false;
+            options.recoil=frame->cfg.rcs;options.bomb=frame->cfg.bomb_timer;options.observers=frame->cfg.spectator_list;
             options.items=frame->cfg.item_esp;
+            options.weapons=frame->cfg.esp && frame->cfg.esp_weapon;
+            options.names=frame->cfg.spectator_list || (frame->cfg.radar && frame->cfg.radar_names);
+            options.angles=frame->cfg.radar;
+            options.crosshair=frame->cfg.triggerbot;
         }
         cache.update(options);
-        g_snapshot.store(std::make_shared<const EntityCache>(cache));
+        g_snapshot.store(std::make_shared<const EntityCache>(cache.snapshot()));
         if (frame && (!frame->width || !frame->height)) Sleep(30);
-        else timer.wait();
+        else timer.wait(frame->cfg.needs_input()?4:8);
         anti_debug::watchdog_tick(); // silent exit if debugger attaches mid-session
     }
 }
@@ -61,22 +82,32 @@ static void input_thread_fn(Memory& memory) {
     ULONGLONG next_write_attempt=0;
     while (g_running.load()) {
         const auto frame=g_input_frame.load();
-        const auto snapshot=g_snapshot.load();
+        const auto access=g_auth_state.load();
+        const bool permitted=access && auth_grant_active(*access,input_clock_ms(),g_auth_deadline.load()) && frame && frame->cfg.needs_input() && !frame->blocked && frame->enabled && !frame->cfg.menu_open;
+        const auto snapshot=permitted?g_snapshot.load():std::shared_ptr<const EntityCache>{};
         DWORD foreground_pid=0;
-        GetWindowThreadProcessId(GetForegroundWindow(),&foreground_pid);
-        const bool active=frame && frame->enabled && !frame->cfg.menu_open && snapshot && snapshot->ready() &&
-            foreground_pid==memory.pid() && GetTickCount64()-snapshot->sampled_at()<=30;
+        if(permitted)GetWindowThreadProcessId(GetForegroundWindow(),&foreground_pid);
+        const bool gameplay_input=permitted && gameplay_cursor_captured();
+        const bool active=gameplay_input && snapshot && snapshot->ready() &&
+            foreground_pid==memory.pid() && input_clock_ms()-snapshot->sampled_at()<=30;
         if (active) {
             if (frame->cfg.no_flash && !memory.has_write() && GetTickCount64()>=next_write_attempt) {
                 memory.attach_write("cs2.exe"); next_write_attempt=GetTickCount64()+5000;
             }
             aim.update(*snapshot,frame->cfg,&memory);
             misc.update(*snapshot,frame->cfg,&memory,frame->width,frame->height);
-        } else { aim.reset(); misc.reset(); }
+        } else {
+            const bool brief_gap=gameplay_input && snapshot && snapshot->ready() && foreground_pid==memory.pid() &&
+                input_clock_ms()-snapshot->sampled_at()<=100;
+            const bool aiming_gap=brief_gap && frame->cfg.aim &&
+                (GetAsyncKeyState(frame->cfg.aim_key)&0x8000) && (!frame->cfg.aim_ads_only || (GetAsyncKeyState(VK_RBUTTON)&0x8000));
+            if(aiming_gap)aim.suspend();else aim.reset();
+            if(brief_gap)misc.suspend(frame->cfg);else misc.reset();
+        }
         g_write_available.store(memory.has_write());
         g_trigger_state.store(misc.trigger_state());
-        if (active) timer.wait();
-        else Sleep(8);
+        if (active || (gameplay_input && foreground_pid==memory.pid())) timer.wait();
+        else Sleep(20);
     }
     aim.reset(); misc.reset();
 }
@@ -92,17 +123,28 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     if (GetModuleFileNameW(nullptr, exe_path, MAX_PATH))
         std::filesystem::current_path(std::filesystem::path(exe_path).parent_path());
     Config cfg;
-    cfg.load("configs/default.hbc");
+    std::string profile_error;
+    std::string startup_profile;
+    if(!profile_store::startup(cfg,startup_profile,&profile_error))
+        MessageBoxA(nullptr,("Nao foi possivel carregar seu perfil. Os ajustes padrao serao usados.\n"+profile_error).c_str(),"Capri - perfil",MB_OK|MB_ICONWARNING);
+    std::string protected_key,credential_error;
+    const auto credential_result=credentials::load("credentials.dat",protected_key,credential_error);
+    if(credential_result==credentials::Result::Loaded)strcpy_s(cfg.saved_key,protected_key.c_str());
+    else if(credential_result==credentials::Result::Error) {
+        cfg.saved_key[0]=0;
+        MessageBoxA(nullptr,credential_error.c_str(),"Capri - chave protegida",MB_OK|MB_ICONWARNING);
+    }
+    if(!protected_key.empty())SecureZeroMemory(protected_key.data(),protected_key.size());
 
     // ── Auth ─────────────────────────────────────────────────────────────────
     Auth    auth;
     AuthInfo auth_info;
-    if (!show_login(cfg, auth, auth_info)) return 0;
+    Memory mem;
+    if (!show_login(cfg, auth, auth_info, mem)) return 0;
     cfg.menu_open = true;
 
     // ── Wait for CS2 ─────────────────────────────────────────────────────────
-    Memory mem;
-    while (!mem.attach(ENC("cs2.exe").decrypt())) Sleep(1000);
+    // The cancellable login window stays open until the game handle is ready.
 
     // ── Resolve offsets ───────────────────────────────────────────────────────
     EntityCache cache;
@@ -132,49 +174,102 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     ImGui_ImplWin32_Init(overlay.hwnd());
     ImGui_ImplDX11_Init(overlay.device(), overlay.context());
-    if (!io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/segoeui.ttf", 18.f))
+    if (!io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/segoeui.ttf", 16.f))
         io.Fonts->AddFontDefault();
     overlay.set_interactive(cfg.menu_open);
 
     // ── Subsystems ────────────────────────────────────────────────────────────
     Esp    esp;
     esp.init(overlay.device());
-    Menu   menu;
+    Menu   menu(startup_profile);
 
     // ── Entity cache thread ───────────────────────────────────────────────────
     std::thread ent_thread(entity_thread_fn, std::ref(cache), std::ref(g_running));
     std::thread input_thread(input_thread_fn,std::ref(mem));
 
-    // ── Periodic revalidation thread (every 5 minutes) ────────────────────────
-    const std::string session_key = cfg.saved_key;
+    // Network retries run away from rendering/input and cannot extend a grant.
+    g_session_key.store(std::make_shared<const std::string>(cfg.saved_key));
+    auto accepted_key=g_session_key.load();
+    g_auth_deadline.store(input_clock_ms()+AUTH_LEASE_MS);
+    g_auth_state.store(std::make_shared<const AuthInfo>(auth_info));
     std::thread auth_thread([&]() {
         std::unique_lock<std::mutex> lock(g_stop_mutex);
-        while (!g_stop_cv.wait_for(lock, std::chrono::minutes(5), [] { return !g_running.load(); })) {
+        auto next=std::chrono::steady_clock::now();
+        while(g_running.load()) {
+            g_stop_cv.wait_until(lock,next,[]{return !g_running.load() || g_auth_retry.load();});
+            if(!g_running.load())break;
+            if(g_auth_retry.exchange(false))next=std::chrono::steady_clock::now();
             lock.unlock();
-            bool valid = auth.revalidate(session_key, auth_info.hwid);
+            const auto key=g_session_key.load();
+            auto result=auth.validate_online(*key);
             lock.lock();
-            if (!valid) { g_running.store(false); break; }
+            if(key==g_session_key.load()) {
+                const auto previous=g_auth_state.load();
+                const auto now=input_clock_ms();
+                if(!previous || !auth_keep_previous_grant(*previous,result,now,g_auth_deadline.load())) {
+                    g_auth_deadline.store(result.result==AuthResult::OK?now+AUTH_LEASE_MS:0);
+                    g_auth_state.store(std::make_shared<const AuthInfo>(std::move(result)));
+                }
+            }
+            next+=std::chrono::milliseconds(AUTH_POLL_MS);
+            if(next<std::chrono::steady_clock::now())next=std::chrono::steady_clock::now()+std::chrono::milliseconds(AUTH_POLL_MS);
         }
     });
 
     // ── Render loop ───────────────────────────────────────────────────────────
     PollTimer render_timer;
+    bool presented_content=true;
+    MenuFrameGate menu_gate;
+    std::shared_ptr<const AuthInfo> last_draw_access;
+    bool was_blocked=false;
+    bool menu_before_block=true;
     while (g_running.load()) {
-        if (!overlay.begin_frame()) break;
+        if (!overlay.begin_frame(false,false)) break;
 
+        auto access=g_auth_state.load();
+        if(access && access->result==AuthResult::OK && input_clock_ms()>=g_auth_deadline.load()) {
+            auto expired=std::make_shared<AuthInfo>();expired->message="A verificacao do servidor expirou. Aguardando nova validacao.";access=expired;
+        }
+        const bool blocked=access && access->result!=AuthResult::OK;
+        if(blocked && !was_blocked){menu_before_block=cfg.menu_open;g_snapshot.store({});}
+        if(!blocked && was_blocked)cfg.menu_open=menu_before_block;
+        was_blocked=blocked;
+        if(!blocked && g_session_key.load()!=accepted_key){
+            accepted_key=g_session_key.load();strcpy_s(cfg.saved_key,accepted_key->c_str());
+            std::string error;credentials::save("credentials.dat",*accepted_key,error);
+        }
         // Toggle menu
         static bool menu_key_last = false;
         bool menu_key_now = (GetAsyncKeyState(cfg.menu_key) & 0x8000) != 0;
         if (menu_key_now && !menu_key_last && overlay.visible()) cfg.menu_open = !cfg.menu_open;
+        if(blocked)cfg.menu_open=true;
+        if(cfg.menu_open)overlay.set_content_visible(true);
         overlay.set_interactive(cfg.menu_open);
+        if(!cfg.menu_open && !blocked && !cfg.needs_drawing())overlay.set_content_visible(false);
         menu_key_last = menu_key_now;
+        menu.motion_tick(cfg,overlay.visible());
 
         // Check if CS2 still running
         if (!mem.is_valid()) break;
         if (!overlay.visible()) {
-            auto frame=std::make_shared<InputFrame>(); frame->cfg=cfg;
-            g_input_frame.store(frame); Sleep(30); continue;
+            g_input_frame.publish(cfg,0,0,false,blocked);presented_content=true;menu_gate.reset();Sleep(30);continue;
         }
+
+        if(!blocked && !cfg.menu_open && !cfg.needs_drawing()) {
+            g_input_frame.publish(cfg,overlay.width(),overlay.height(),true,false);
+            // Clear the previous menu once; idle polls do not submit GPU frames.
+            if(presented_content){overlay.prepare_frame();overlay.end_frame();presented_content=false;}
+            menu_gate.reset();render_timer.wait(30);continue;
+        }
+        const bool interacting=io.WantTextInput || ImGui::IsAnyItemActive() ||
+            ImGui::IsKeyDown(ImGuiKey_Tab) || ImGui::IsKeyDown(ImGuiKey_LeftArrow) || ImGui::IsKeyDown(ImGuiKey_RightArrow) ||
+            ImGui::IsKeyDown(ImGuiKey_UpArrow) || ImGui::IsKeyDown(ImGuiKey_DownArrow) || ImGui::IsKeyDown(ImGuiKey_Enter) || ImGui::IsKeyDown(ImGuiKey_Space);
+        const auto draw_time=input_clock_ms();
+        if(!menu_gate.due(draw_time,overlay.revision(),!blocked && cfg.needs_visual_stream(),interacting,access!=last_draw_access,menu.animating())) {
+            MsgWaitForMultipleObjectsEx(0,nullptr,static_cast<DWORD>(menu_gate.wait_ms(draw_time,menu.animating())),QS_ALLINPUT,MWMO_INPUTAVAILABLE);
+            continue;
+        }
+
 
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
@@ -185,28 +280,48 @@ int WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         const auto snapshot=g_snapshot.load();
         cfg.write_available=g_write_available.load();
         cfg.trigger_status=Misc::trigger_text(g_trigger_state.load());
-        if (snapshot) {
+        if(!cfg.needs_entities()){cfg.game_status="Recursos desligados | leitura em espera";cfg.game_ready=false;}
+        if (snapshot && !blocked && cfg.needs_entities()) {
             cfg.game_status=snapshot->status(); cfg.game_ready=snapshot->ready();
+            if(cfg.aim && cfg.aim_visibility && !snapshot->visibility_ready())cfg.game_status+=" | Mira pausada: geometria do mapa indisponivel";
             esp.render(*snapshot,cfg,ImGui::GetBackgroundDrawList(),sw,sh);
         }
 
         // Menu
-        if (cfg.menu_open) {
+        if (cfg.menu_open && !blocked) {
             bool running = g_running.load();
-            menu.render(cfg, auth_info, running);
+            menu.render(cfg, access ? *access : auth_info, running);
             menu.radar_controls(cfg,sw,sh);
             if (!running) g_running.store(false);
         }
 
+        if(blocked) {
+            bool running=g_running.load();std::string requested;
+            menu.render_access_block(*access,sw,sh,running,&requested);
+            if(!requested.empty()){
+                std::lock_guard<std::mutex> guard(g_stop_mutex);
+                g_session_key.store(std::make_shared<const std::string>(std::move(requested)));
+                g_auth_state.store(std::make_shared<const AuthInfo>());g_auth_deadline.store(0);
+                g_auth_retry.store(true);g_stop_cv.notify_all();
+            }
+            if(!running)g_running.store(false);
+        }
         overlay.set_interactive(cfg.menu_open);
-        auto frame=std::make_shared<InputFrame>();
-        frame->cfg=cfg; frame->width=sw; frame->height=sh; frame->enabled=!cfg.menu_open;
-        g_input_frame.store(frame);
+        g_input_frame.publish(cfg,sw,sh,!cfg.menu_open&&!blocked,blocked);
         ImGui::Render();
-        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-        overlay.end_frame();
-        render_timer.wait(4); // Bound CPU use without waiting for a VSync interval.
+        const bool has_content=ImGui::GetDrawData()->TotalVtxCount>0;
+        overlay.set_content_visible(has_content);
+        if(has_content || presented_content) {
+            overlay.prepare_frame();
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+            overlay.end_frame();
+        }
+        presented_content=has_content;
+        menu_gate.commit(draw_time,overlay.revision());last_draw_access=access;
+        // Closed, inactive panels need only poll PgUp; menus refresh at 60 Hz.
+        const auto spent=input_clock_ms()-draw_time;
+        const DWORD budget=!cfg.menu_open && !cfg.needs_drawing()?30:16;
+        if(spent<budget)render_timer.wait(static_cast<DWORD>(budget-spent));
     }
 
     { std::lock_guard<std::mutex> lock(g_stop_mutex); g_running.store(false); }

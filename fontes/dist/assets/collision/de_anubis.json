@@ -1,0 +1,21 @@
+{
+  "format": 2,
+  "leaf_size": 64,
+  "triangles": 674102,
+  "nodes": 32767,
+  "vertices": 383901,
+  "bytes": 6532933,
+  "raw_bounds_min": [
+    -3202.5048828125,
+    -3456.0,
+    -704.0
+  ],
+  "raw_bounds_max": [
+    2816.509765625,
+    4736.0,
+    1040.0
+  ],
+  "map": "de_anubis",
+  "vpk_sha256": "bca91cee11592c65c2869c599769232f29335458376ed90431a013b58c938e07",
+  "source": "Source 2 Viewer: world_physics.vmdl_c physics export; raw Source coordinates; static geometry only"
+}

@@ -1,4 +1,6 @@
 #include "entities.hpp"
+#include "map_collision.hpp"
+#include "input.hpp"
 #include <algorithm>
 #include <cstring>
 
@@ -8,8 +10,10 @@ template<class T,size_t N> T field(const std::array<uint8_t,N>& bytes,size_t off
 }
 constexpr size_t ControllerBytes=(std::max)({size_t(offsets::m_bPawnHasHelmet+1),size_t(offsets::m_hPlayerPawn+4),
     size_t(offsets::m_hObserverPawn+4),size_t(offsets::m_sSanitizedPlayerName+sizeof(uintptr_t)),size_t(offsets::m_bPawnIsAlive+1)});
-constexpr size_t PawnBytes=(std::max)({size_t(offsets::m_angEyeAngles+sizeof(Vec3)),size_t(offsets::m_iIDEntIndex+4),
-    size_t(offsets::m_pWeaponServices+sizeof(uintptr_t)),size_t(offsets::m_vecViewOffset+sizeof(Vec3))});
+// The distant eye-angle/crosshair fields are optional, not part of every pawn read.
+constexpr size_t PawnBytes=(std::max)({size_t(offsets::m_ArmorValue+sizeof(int)),
+    size_t(offsets::m_pWeaponServices+sizeof(uintptr_t)),size_t(offsets::m_vecViewOffset+sizeof(Vec3)),
+    size_t(offsets::m_pAimPunchServices+sizeof(uintptr_t)),size_t(offsets::m_entitySpottedState+offsets::m_bSpottedByMask+sizeof(uint64_t))});
 }
 
 bool EntityCache::init(Memory* mem) { mem_ = mem; return mem != nullptr; }
@@ -39,7 +43,7 @@ bool EntityCache::resolve() {
 }
 uintptr_t EntityCache::entity_at(uint32_t index) const {
     if (!system_ || index > 0x7FFE) return 0;
-    const auto chunk = mem_->read<uintptr_t>(system_ + offsets::ENT_LIST_OFFSET + 8ULL * (index >> 9));
+    const auto chunk = (index>>9)==0 ? controller_chunk_ : mem_->read<uintptr_t>(system_ + offsets::ENT_LIST_OFFSET + 8ULL * (index >> 9));
     return chunk ? mem_->read<uintptr_t>(chunk + offsets::ENT_IDENT_SIZE * (index & 0x1FF)) : 0;
 }
 uintptr_t EntityCache::entity_handle(uint32_t handle) const {
@@ -49,13 +53,16 @@ uintptr_t EntityCache::entity_handle(uint32_t handle) const {
 void EntityCache::update(CacheOptions options) {
     options_=options;
     ready_ = false;
-    sampled_at_=GetTickCount64();
+    sampled_at_=input_clock_ms();
     if (!mem_ || !mem_->is_valid()) { status_ = "CS2 desconectado"; return; }
     if (!ent_system && !resolve()) return;
     system_ = mem_->read<uintptr_t>(ent_system);
+    controller_chunk_=system_ ? mem_->read<uintptr_t>(system_+offsets::ENT_LIST_OFFSET) : 0;
     if (options_.items) update_items();
     else { items_.clear(); pending_items_.clear(); item_last_=0; }
-    update_entities(); update_bomb(); update_vm(); update_map();
+    update_entities();
+    if(options_.bomb)update_bomb();else bomb_={};
+    update_vm();update_map();
     if (!system_) status_ = "Lista de entidades indisponivel";
     else if (!local()) status_ = "Aguardando jogador local / partida";
     else { ready_ = true; status_ = "CS2 build " + std::to_string(offsets::BUILD_NUMBER) + " | Jogadores: " + std::to_string(players_.size()); }
@@ -90,16 +97,20 @@ void EntityCache::update_map() {
     const auto bytes=name_ptr ? mem_->read_bytes(name_ptr,96) : std::vector<uint8_t>{};
     const auto end=std::find(bytes.begin(),bytes.end(),uint8_t{0});
     const std::string name(bytes.begin(),end);
-    if (name.empty() || name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")!=std::string::npos) { map_name_.clear(); return; }
+    if (name.empty() || name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")!=std::string::npos) { map_name_.clear();collision_.reset(); return; }
     if (map_name_!=name) { items_.clear(); pending_items_.clear(); item_last_=0; next_item_scan_=0; }
+    if(map_name_!=name)collision_=MapCollision::load(std::filesystem::path("assets/collision")/(name+".bvh"));
     map_name_=name;
 }
+bool EntityCache::clear_path(const Vec3& from,const Vec3& to) const {return collision_ && collision_->clear(from,to);}
 void EntityCache::update_entities() {
     players_.clear(); local_index_=static_cast<size_t>(-1);
     if (!system_) return;
     const auto current=mem_->read<uintptr_t>(local_ctrl);
+    std::array<uint8_t,64*offsets::ENT_IDENT_SIZE> controllers{};
+    const bool controller_block=controller_chunk_ && mem_->read_buffer(controller_chunk_+offsets::ENT_IDENT_SIZE,controllers.data(),controllers.size());
     for (int i=1;i<=64;++i) {
-        const auto ctrl=entity_at(i);
+        const auto ctrl=controller_block ? field<uintptr_t>(controllers,(i-1)*offsets::ENT_IDENT_SIZE) : entity_at(i);
         if (!ctrl) continue;
         const int team=mem_->read<uint8_t>(ctrl+offsets::m_iTeamNum);
         if (team!=2 && team!=3) continue;
@@ -108,29 +119,35 @@ void EntityCache::update_entities() {
         const auto alive=field<uint8_t>(block,offsets::m_bPawnIsAlive);
         if (alive>1) continue;
         PlayerEnt player{}; player.ctrl=ctrl; player.team=team; player.controller_index=i;
-        player.is_local=ctrl==current; player.alive=alive==1;
+        player.is_local=ctrl==current; player.alive=alive==1;player.state_valid=!player.alive;
         player.helmet=field<uint8_t>(block,offsets::m_bPawnHasHelmet)==1;
         const auto pawn_handle=field<uint32_t>(block,offsets::m_hPlayerPawn);
+        player.pawn_handle=pawn_handle;
         player.pawn=entity_handle(pawn_handle);
         if (!player.alive) {
             const auto observer=entity_handle(field<uint32_t>(block,offsets::m_hObserverPawn));
             if (observer) player.pawn=observer;
         }
+        auto& detail=details_[i];
+        if(detail.ctrl!=ctrl || detail.pawn!=player.pawn) {detail={};detail.ctrl=ctrl;detail.pawn=player.pawn;}
         if (player.pawn) read_player(player,ctrl,player.pawn,system_);
         if (player.alive && mem_->read<uint32_t>(ctrl+offsets::m_hPlayerPawn)!=pawn_handle) {
-            player.health=0; player.bones_valid=false;
+            player.health=0; player.bones_valid=false;player.state_valid=true;
         }
         const auto name_ptr=field<uintptr_t>(block,offsets::m_sSanitizedPlayerName);
-        if (name_ptr) {
-            const auto bytes=mem_->read_bytes(name_ptr,sizeof(player.name)-1);
-            if (!bytes.empty()) std::memcpy(player.name,bytes.data(),bytes.size());
+        if(options_.names && (!options_.throttle_details || name_ptr!=detail.name_ptr || GetTickCount64()>=detail.next_name)) {
+            detail.name={};detail.name_ptr=name_ptr;detail.next_name=GetTickCount64()+500+(i%16)*10;
+            const auto bytes=name_ptr ? mem_->read_bytes(name_ptr,sizeof(player.name)-1) : std::vector<uint8_t>{};
+            if(!bytes.empty())std::memcpy(detail.name.data(),bytes.data(),bytes.size());
         }
+        if(options_.names)std::memcpy(player.name,detail.name.data(),sizeof(player.name));
         players_.push_back(std::move(player));
     }
     for (size_t i=0;i<players_.size();++i) if (players_[i].is_local) { local_index_=i; break; }
 }
 void EntityCache::read_player(PlayerEnt& p,uintptr_t,uintptr_t pawn,uintptr_t) {
     if (!p.alive) {
+        if(!p.is_local && !options_.observers)return;
         const auto services=mem_->read<uintptr_t>(pawn+offsets::m_pObserverServices);
         if (services) p.obs_target=entity_handle(mem_->read<uint32_t>(services+offsets::m_hObserverTarget));
         return;
@@ -138,7 +155,10 @@ void EntityCache::read_player(PlayerEnt& p,uintptr_t,uintptr_t pawn,uintptr_t) {
     std::array<uint8_t,PawnBytes> block{};
     if (!mem_->read_buffer(pawn,block.data(),block.size()) || field<uint8_t>(block,offsets::m_iTeamNum)!=p.team) return;
     p.health=field<int>(block,offsets::m_iHealth);
+    p.state_valid=p.health>=0 && p.health<=1000;
     if (p.health<1 || p.health>1000) { p.health=0; return; }
+    p.velocity=field<Vec3>(block,offsets::m_vecAbsVelocity);
+    p.velocity_valid=p.velocity.finite() && p.velocity.len()<=4096.f;
     p.armor=field<int>(block,offsets::m_ArmorValue);
     p.scoped=field<uint8_t>(block,offsets::m_bIsScoped)==1;
     p.defusing=field<uint8_t>(block,offsets::m_bIsDefusing)==1;
@@ -152,30 +172,39 @@ void EntityCache::read_player(PlayerEnt& p,uintptr_t,uintptr_t pawn,uintptr_t) {
             extent.y>=8 && extent.y<=128 && extent.z>=16 && extent.z<=128;
     }
     const auto punch=field<uintptr_t>(block,offsets::m_pAimPunchServices);
-    if (punch) p.punch_angle=mem_->read<Vec3>(punch+offsets::m_predictableBaseAngle)+mem_->read<Vec3>(punch+offsets::m_unpredictableBaseAngle);
-    p.eye_angles=p.is_local ? mem_->read<Vec3>(view_angles_addr) : field<Vec3>(block,offsets::m_angEyeAngles);
+    if (p.is_local && options_.recoil && punch) p.punch_angle=mem_->read<Vec3>(punch+offsets::m_predictableBaseAngle)+mem_->read<Vec3>(punch+offsets::m_unpredictableBaseAngle);
+    if(p.is_local)p.eye_angles=mem_->read<Vec3>(view_angles_addr);
+    else if(options_.angles)p.eye_angles=mem_->read<Vec3>(pawn+offsets::m_angEyeAngles);
     p.shots_fired=field<int>(block,offsets::m_iShotsFired);
-    if (p.is_local) {
-        const int index=field<int>(block,offsets::m_iIDEntIndex);
-        if (index>0 && index<0x7FFF) p.crosshair_target=entity_at(static_cast<uint32_t>(index));
+    if (p.is_local && options_.crosshair) {
+        const auto index=mem_->read<uint32_t>(pawn+offsets::m_iIDEntIndex);
+        if(index && index!=UINT32_MAX)p.crosshair_target=entity_at(index&0x7fff);
     }
     p.spotted_by=field<uint64_t>(block,offsets::m_entitySpottedState+offsets::m_bSpottedByMask);
     const auto scene=field<uintptr_t>(block,offsets::m_pGameSceneNode);
     std::array<uint8_t,offsets::m_bDormant+1-offsets::m_vecAbsOrigin> scene_block{};
-    if (!scene || !mem_->read_buffer(scene+offsets::m_vecAbsOrigin,scene_block.data(),scene_block.size())) { p.health=0; return; }
+    if (!scene || !mem_->read_buffer(scene+offsets::m_vecAbsOrigin,scene_block.data(),scene_block.size())) { p.health=0;p.state_valid=false;return; }
+    p.scene=scene;
     p.origin=field<Vec3>(scene_block,0); p.dormant=field<uint8_t>(scene_block,offsets::m_bDormant-offsets::m_vecAbsOrigin)!=0;
-    if (!p.origin.finite()) { p.health=0; return; }
+    if (!p.origin.finite()) { p.health=0;p.state_valid=false;return; }
     if (options_.bones) read_bones(p,pawn);
     p.head=p.bones_valid ? p.bone[p.rig.target(0)].pos() : p.origin+Vec3{0,0,64};
     const auto view=field<Vec3>(block,offsets::m_vecViewOffset);
     p.eye=view.finite() && std::fabs(view.x)<=16 && std::fabs(view.y)<=16 && view.z>0 && view.z<100 ? p.origin+view : p.head;
-    read_weapon(p,pawn,system_);
+    auto& detail=details_[p.controller_index];
+    if(options_.weapons && (!options_.throttle_details || GetTickCount64()>=detail.next_weapon)) {
+        read_weapon(p,pawn,system_);detail.next_weapon=GetTickCount64()+80+(p.controller_index%8)*5;
+        detail.weapon_id=p.weapon_id;detail.clip=p.clip;detail.reserve=p.reserve;detail.utilities=p.util_ids;
+    } else if(options_.weapons) {
+        p.weapon_id=detail.weapon_id;p.clip=detail.clip;p.reserve=detail.reserve;
+        if(options_.inventory)p.util_ids=detail.utilities;
+    }
 }
 void EntityCache::read_bones(PlayerEnt& p, uintptr_t pawn) {
-    const auto scene = mem_->read<uintptr_t>(pawn + offsets::m_pGameSceneNode);
-    const auto array = scene ? mem_->read<uintptr_t>(scene + offsets::m_modelState + offsets::m_pBoneArray) : 0;
-    if (!array) return;
+    const auto scene = p.scene;
+    if (!scene) return;
     const auto binding = mem_->read<uintptr_t>(scene + offsets::m_modelState + offsets::m_hModel);
+    p.model_binding=binding;
     const auto model = binding ? mem_->read<uintptr_t>(binding) : 0;
     if (model) {
         auto found=model_rigs_.find(model);
@@ -191,22 +220,148 @@ void EntityCache::read_bones(PlayerEnt& p, uintptr_t pawn) {
                     values.emplace_back(bytes.begin(),end);
                 }
                 found=model_rigs_.emplace(model,bones::from_names(values)).first;
+                auto info=std::make_shared<ModelInfo>();info->bones=values;
+                const auto name_ptr=mem_->read<uintptr_t>(scene+offsets::m_modelState+offsets::m_ModelName);
+                const auto text=name_ptr?mem_->read_bytes(name_ptr,260):std::vector<uint8_t>{};
+                const auto terminator=std::find(text.begin(),text.end(),uint8_t{0});
+                if(terminator!=text.end())info->name.assign(text.begin(),terminator);
+                std::replace(info->name.begin(),info->name.end(),'\\','/');
+                model_infos_[model]=std::move(info);
             }
         }
         if (found!=model_rigs_.end()) p.rig=found->second;
+        auto info=model_infos_.find(model);
+        if(info!=model_infos_.end() && info->second->name.empty()) {
+            const auto ptr=mem_->read<uintptr_t>(scene+offsets::m_modelState+offsets::m_ModelName);
+            const auto bytes=ptr?mem_->read_bytes(ptr,260):std::vector<uint8_t>{};
+            const auto end=std::find(bytes.begin(),bytes.end(),uint8_t{0});
+            if(end!=bytes.end() && end!=bytes.begin()) {
+                auto replacement=std::make_shared<ModelInfo>(*info->second);
+                replacement->name.assign(bytes.begin(),end);
+                std::replace(replacement->name.begin(),replacement->name.end(),'\\','/');
+                info->second=std::move(replacement);
+            }
+        }
+        if(info!=model_infos_.end())p.model_info=info->second;
     }
-    const int count=p.rig.read_count();
-    const int head_index=p.rig.target(0);
-    if (count<=0 || count>static_cast<int>(p.bone.size()) || head_index<0) return;
+    read_pose(p,scene);
+}
+bool EntityCache::read_pose(PlayerEnt& p,uintptr_t scene) const {
+    const auto array=mem_->read<uintptr_t>(scene+offsets::m_modelState+offsets::m_pBoneArray);
+    const int count=p.rig.read_count(), head_index=p.rig.target(0);
+    p.bones_valid=false;
+    if(!array || count<=0 || count>static_cast<int>(p.bone.size()) || head_index<0)return false;
     const size_t size=count*sizeof(BoneMat);
     std::array<BoneMat,128> verify{};
-    if (!mem_->read_buffer(array,p.bone.data(),size) || !mem_->read_buffer(array,verify.data(),size)) return;
-    if (std::memcmp(p.bone.data(),verify.data(),size)!=0) {
-        if (!mem_->read_buffer(array,p.bone.data(),size) || std::memcmp(p.bone.data(),verify.data(),size)!=0) return;
+    if(!mem_->read_buffer(array,p.bone.data(),size) || !mem_->read_buffer(array,verify.data(),size))return false;
+    if(std::memcmp(p.bone.data(),verify.data(),size)!=0) {
+        if(!mem_->read_buffer(array,p.bone.data(),size) || std::memcmp(p.bone.data(),verify.data(),size)!=0)return false;
     }
-    if (mem_->read<uintptr_t>(scene+offsets::m_modelState+offsets::m_pBoneArray)!=array) return;
-    Vec3 head{};
-    p.bones_valid=p.bone_point(head_index,head) && head.z-p.origin.z>=8.f;
+    if(mem_->read<uintptr_t>(scene+offsets::m_modelState+offsets::m_pBoneArray)!=array)return false;
+    Vec3 head{};p.bones_valid=p.bone_point(head_index,head) && head.z-p.origin.z>=8.f;
+    if(p.bones_valid){p.head=head;p.pose_at=input_clock_ms();}
+    return p.bones_valid;
+}
+bool EntityCache::current_local_team(int& team) const {
+    const auto* player=local();
+    if(!mem_ || !player || !player->valid() || !player->ctrl || !local_ctrl)return false;
+    uintptr_t controller=0;uint32_t handle=0;uint8_t controller_team=0,pawn_team=0;
+    if(!mem_->read_into(local_ctrl,controller) || controller!=player->ctrl ||
+       !mem_->read_into(controller+offsets::m_hPlayerPawn,handle) || handle!=player->pawn_handle ||
+       entity_handle(handle)!=player->pawn ||
+       !mem_->read_into(controller+offsets::m_iTeamNum,controller_team) ||
+       !mem_->read_into(player->pawn+offsets::m_iTeamNum,pawn_team) ||
+       (pawn_team!=2 && pawn_team!=3) || controller_team!=pawn_team || pawn_team!=player->team)return false;
+    team=pawn_team;return true;
+}
+bool EntityCache::current_observer_target(uintptr_t& target) const {
+    target=0;const auto* p=local();
+    if(!mem_ || !p || !p->ctrl)return false;
+    uintptr_t controller=0;uint8_t alive=0;
+    if(!mem_->read_into(local_ctrl,controller) || controller!=p->ctrl ||
+       !mem_->read_into(controller+offsets::m_bPawnIsAlive,alive) || alive>1)return false;
+    if(alive)return true;
+    uint32_t observer_handle=0,target_handle=0;uintptr_t services=0;
+    if(!mem_->read_into(controller+offsets::m_hObserverPawn,observer_handle))return false;
+    const auto observer=entity_handle(observer_handle);
+    if(!observer || !mem_->read_into(observer+offsets::m_pObserverServices,services) || !services ||
+       !mem_->read_into(services+offsets::m_hObserverTarget,target_handle))return false;
+    if(target_handle==0 || target_handle==0xFFFFFFFF)return true;
+    target=entity_handle(target_handle);return target!=0;
+}
+
+bool EntityCache::current_crosshair_target(uintptr_t& target) const {
+    target=0;const auto* local_player=local();if(!mem_ || !local_player || !local_player->valid())return false;
+    uintptr_t controller=0;uint32_t handle=0,index=0;uint8_t alive=0;
+    if(!mem_->read_into(local_ctrl,controller) || controller!=local_player->ctrl ||
+       !mem_->read_into(controller+offsets::m_bPawnIsAlive,alive) || alive!=1 ||
+       !mem_->read_into(controller+offsets::m_hPlayerPawn,handle) || handle!=local_player->pawn_handle ||
+       entity_handle(handle)!=local_player->pawn || !mem_->read_into(local_player->pawn+offsets::m_iIDEntIndex,index))return false;
+    if(index==0 || index==UINT32_MAX)return true;
+    const auto candidate=entity_at(index&0x7fff);
+    for(const auto& player:players_)if(player.pawn==candidate && !player.is_local &&
+        (index<0x8000 || player.pawn_handle==index)){target=candidate;break;}
+    return true;
+}
+bool EntityCache::current_enemy(const PlayerEnt& player,int local_team) const {
+    if(!mem_ || !player.valid() || player.is_local || (local_team!=2 && local_team!=3))return false;
+    uint32_t handle=0;uint8_t controller_team=0,pawn_team=0;int health=0;
+    return mem_->read_into(player.ctrl+offsets::m_hPlayerPawn,handle) && handle==player.pawn_handle &&
+        entity_handle(handle)==player.pawn && mem_->read_into(player.ctrl+offsets::m_iTeamNum,controller_team) &&
+        mem_->read_into(player.pawn+offsets::m_iTeamNum,pawn_team) && (pawn_team==2 || pawn_team==3) &&
+        controller_team==pawn_team && pawn_team==player.team && pawn_team!=local_team &&
+        mem_->read_into(player.pawn+offsets::m_iHealth,health) && health>0 && health<=1000;
+}
+bool EntityCache::refresh_pose(const PlayerEnt& source,PlayerEnt& out) const {
+    if(!mem_ || !source.valid() || !source.scene || !source.ctrl)return false;
+    const auto handle=mem_->read<uint32_t>(source.ctrl+offsets::m_hPlayerPawn);
+    if(entity_handle(handle)!=source.pawn || mem_->read<int>(source.pawn+offsets::m_iHealth)<=0 || mem_->read<uint8_t>(source.pawn+offsets::m_iTeamNum)!=source.team)return false;
+    const auto scene=mem_->read<uintptr_t>(source.pawn+offsets::m_pGameSceneNode);
+    if(scene!=source.scene || mem_->read<uintptr_t>(scene+offsets::m_modelState+offsets::m_hModel)!=source.model_binding)return false;
+    Vec3 origin{};
+    if(!mem_->read_into(scene+offsets::m_vecAbsOrigin,origin) || !origin.finite() || mem_->read<uint8_t>(scene+offsets::m_bDormant)!=0)return false;
+    out=source;out.origin=origin;out.eye=origin+(source.eye-source.origin);
+    out.velocity_valid=mem_->read_into(source.pawn+offsets::m_vecAbsVelocity,out.velocity) && out.velocity.finite() && out.velocity.len()<=4096.f;
+    if(!read_pose(out,scene))return false;
+    Vec3 verify{};
+    return mem_->read_into(scene+offsets::m_vecAbsOrigin,verify) && std::memcmp(&origin,&verify,sizeof(origin))==0 &&
+        mem_->read<uint32_t>(source.ctrl+offsets::m_hPlayerPawn)==handle;
+}
+bool EntityCache::visual_pose(const PlayerEnt& source,PlayerEnt& out,ULONGLONG age_ms,bool validate_live) const {
+    // Render-only continuity. Input/aim keep their independent strict freshness checks.
+    if(!source.valid() || (!source.bones_valid && !source.collision_valid) || age_ms>VISUAL_GRACE_MS)return false;
+    if(age_ms<=8 && !validate_live){out=source;return true;}
+    if(!mem_ || !source.scene || !source.ctrl || !source.pawn_handle)return false;
+    constexpr size_t ControllerStateBytes=(std::max)(size_t(offsets::m_hPlayerPawn+4),size_t(offsets::m_bPawnIsAlive+1));
+    std::array<uint8_t,ControllerStateBytes> controller{};
+    if(!mem_->read_buffer(source.ctrl,controller.data(),controller.size()) ||
+       field<uint32_t>(controller,offsets::m_hPlayerPawn)!=source.pawn_handle || field<uint8_t>(controller,offsets::m_bPawnIsAlive)!=1)return false;
+    constexpr size_t IdentityBytes=(std::max)({size_t(offsets::m_iHealth+4),size_t(offsets::m_iTeamNum+1),size_t(offsets::m_pGameSceneNode+sizeof(uintptr_t))});
+    std::array<uint8_t,IdentityBytes> identity{};
+    if(!mem_->read_buffer(source.pawn,identity.data(),identity.size()) ||
+       (field<int>(identity,offsets::m_iHealth)<=0 || field<int>(identity,offsets::m_iHealth)>1000) || field<uint8_t>(identity,offsets::m_iTeamNum)!=source.team ||
+       field<uintptr_t>(identity,offsets::m_pGameSceneNode)!=source.scene)return false;
+    constexpr size_t SceneBytes=(std::max)({size_t(offsets::m_vecAbsOrigin+sizeof(Vec3)),size_t(offsets::m_bDormant+1),size_t(offsets::m_modelState+offsets::m_hModel+sizeof(uintptr_t))});
+    std::array<uint8_t,SceneBytes> scene{};
+    if(!mem_->read_buffer(source.scene,scene.data(),scene.size()) ||
+       field<uint8_t>(scene,offsets::m_bDormant)!=0 ||
+       field<uintptr_t>(scene,offsets::m_modelState+offsets::m_hModel)!=source.model_binding)return false;
+    const auto origin=field<Vec3>(scene,offsets::m_vecAbsOrigin),delta=origin-source.origin;
+    if(!origin.finite() || delta.len()>64.f)return false;
+    out=source;out.health=field<int>(identity,offsets::m_iHealth);out.origin=origin;out.eye=source.eye+delta;out.head=source.head+delta;
+    for(auto& bone:out.bone)bone.position=bone.position+delta;
+    return true;
+}
+
+EntityCache EntityCache::snapshot() const {
+    EntityCache next;
+    next.mem_=mem_;next.players_=players_;next.local_index_=local_index_;next.vm_=vm_;next.bomb_=bomb_;
+    next.items_=items_;next.system_=system_;next.controller_chunk_=controller_chunk_;next.client_=client_;next.ready_=ready_;
+    next.sensitivity_=sensitivity_;next.status_=status_;next.sampled_at_=sampled_at_;next.map_name_=map_name_;
+    next.collision_=collision_;
+    next.ent_system=ent_system;next.local_ctrl=local_ctrl;next.vm_addr=vm_addr;next.c4_list=c4_list;
+    next.globals_addr=globals_addr;next.view_angles_addr=view_angles_addr;
+    return next;
 }
 void EntityCache::read_weapon(PlayerEnt& p, uintptr_t pawn, uintptr_t) {
     const auto services = mem_->read<uintptr_t>(pawn + offsets::m_pWeaponServices);

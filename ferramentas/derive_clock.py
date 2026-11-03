@@ -27,6 +27,7 @@ for i in range(struct.unpack_from('<H',data,pe+6)[0]):
             evidence.append({'global_load_rva':hex(rva+at),'clock_offset':'0x30',
                 'instructions':[f'{ins.address:#x}: {ins.mnemonic} {ins.op_str}' for ins in instructions[:22]]})
 if not evidence: raise RuntimeError('Could not verify timer clock access; inspect C4 timer function manually.')
-report={'client_sha256':hashlib.sha256(data).hexdigest(),'build':14194,'CGlobalVars_curtime':'0x30','CPlantedC4_blow':hex(blow),'evidence':evidence[:3]}
+info=json.loads((root/'cs2-local/info.json').read_text())
+report={'client_sha256':hashlib.sha256(data).hexdigest(),'build':info['build_number'],'CGlobalVars_curtime':'0x30','CPlantedC4_blow':hex(blow),'evidence':evidence[:3]}
 (root/'cs2-local/clock_provenance.json').write_text(json.dumps(report,indent=2))
 print(json.dumps(report,indent=2))

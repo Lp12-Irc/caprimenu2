@@ -1,6 +1,5 @@
 // language: C++20, file: aimbot.hpp, target: Windows 11 x64
 // Standard aimbot: SendInput for mouse delta — no WPM, no handle write
-// Command-level silent aim is not implemented by this class.
 #pragma once
 #include "entities.hpp"
 #include "config.hpp"
@@ -11,16 +10,22 @@ class Aimbot {
 public:
     explicit Aimbot(InputApi input = {}) : input_(input) {}
     void update(const EntityCache& cache, const Config& cfg, Memory* mem);
-    void reset() { prev_punch_={}; target_=target_ctrl_=0; target_since_=last_update_=0; mouse_x_=mouse_y_=0; awaiting_feedback_=false; }
+    void reset() { prev_punch_={}; target_=target_ctrl_=0; target_handle_=0;target_since_=last_update_=target_seen_=0; mouse_x_=mouse_y_=0; awaiting_feedback_=false;command_sent_at_=0; }
+
+    void suspend() {mouse_x_=mouse_y_=0;last_update_=0;}
 
 private:
+    static constexpr ULONGLONG feedback_timeout_ms = 80;
+    ULONGLONG command_sent_at_ = 0;
     Vec3  calc_angle(const Vec3& src, const Vec3& dst) const;
     float normalize(float a)                            const;
     bool get_bone_pos(const PlayerEnt& p,int bone,Vec3& point) const;
-    bool send_mouse(float dpitch,float dyaw,float sens);
+    bool send_mouse(float dpitch,float dyaw,float sens,const Vec3* remaining=nullptr);
     Vec3 prev_punch_{};
     uintptr_t target_ = 0;
     uintptr_t target_ctrl_ = 0;
+    uint32_t target_handle_=0;
+    ULONGLONG target_seen_=0;
     ULONGLONG target_since_ = 0;
     ULONGLONG last_update_ = 0;
     float mouse_x_ = 0, mouse_y_ = 0;

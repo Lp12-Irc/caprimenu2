@@ -1,0 +1,21 @@
+{
+  "format": 2,
+  "leaf_size": 64,
+  "triangles": 2536371,
+  "nodes": 131071,
+  "vertices": 1381604,
+  "bytes": 24456114,
+  "raw_bounds_min": [
+    -3552.0,
+    -2872.0,
+    -280.00006103515625
+  ],
+  "raw_bounds_max": [
+    3968.0,
+    4264.0,
+    1624.0001220703125
+  ],
+  "map": "de_inferno",
+  "vpk_sha256": "bfe3d8a996feb43962b11a51acd76068fd001f793fa750f7df5cf7d9d23a9d89",
+  "source": "Source 2 Viewer: world_physics.vmdl_c physics export; raw Source coordinates; static geometry only"
+}

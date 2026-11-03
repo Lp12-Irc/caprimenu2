@@ -1,6 +1,16 @@
 #pragma once
 #include <Windows.h>
 
+// A free cursor belongs to menus/buy screens. Never inject gameplay input there.
+inline bool gameplay_cursor_captured(DWORD flags,bool queried) {
+    return queried && (flags & (CURSOR_SHOWING | CURSOR_SUPPRESSED))==0;
+}
+inline bool gameplay_cursor_captured() {
+    CURSORINFO cursor{sizeof(CURSORINFO)};
+    const bool queried=GetCursorInfo(&cursor)!=FALSE;
+    return gameplay_cursor_captured(cursor.flags,queried);
+}
+
 inline ULONGLONG WINAPI input_clock_ms() {
     static const LONGLONG frequency=[] { LARGE_INTEGER value{}; QueryPerformanceFrequency(&value); return value.QuadPart; }();
     LARGE_INTEGER value{};
@@ -16,7 +26,7 @@ public:
     ~PollTimer() { if (timer_) CloseHandle(timer_); }
     void wait(DWORD milliseconds=2) {
         LARGE_INTEGER due{}; due.QuadPart=-static_cast<LONGLONG>(milliseconds)*10000; // independent of presentation/VSync.
-        if (timer_ && SetWaitableTimer(timer_,&due,0,nullptr,nullptr,FALSE) && WaitForSingleObject(timer_,25)==WAIT_OBJECT_0) return;
+        if (timer_ && SetWaitableTimer(timer_,&due,0,nullptr,nullptr,FALSE) && WaitForSingleObject(timer_,milliseconds+25)==WAIT_OBJECT_0) return;
         Sleep(milliseconds);
     }
 };

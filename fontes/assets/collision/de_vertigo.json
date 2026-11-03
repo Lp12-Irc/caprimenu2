@@ -1,0 +1,21 @@
+{
+  "format": 2,
+  "leaf_size": 64,
+  "triangles": 192482,
+  "nodes": 8191,
+  "vertices": 111925,
+  "bytes": 1617002,
+  "raw_bounds_min": [
+    -4096.0,
+    -3040.0,
+    -992.0
+  ],
+  "raw_bounds_max": [
+    3392.0,
+    2560.0,
+    15368.0
+  ],
+  "map": "de_vertigo",
+  "vpk_sha256": "77b0afd6d2f3332255cc5bceb9377e6ce8413ae0955106242ee2927e734cdac4",
+  "source": "Source 2 Viewer: world_physics.vmdl_c physics export; raw Source coordinates; static geometry only"
+}

@@ -22,8 +22,9 @@ inline constexpr int CONNECTIONS[][2] = {
 struct Layout {
     std::array<int,JointCount> joint{7,6,5,4,2,1,8,9,10,11,12,13,14,15,17,18,19,20,21,22};
     bool named = false;
+    int model_count = 0;
     int target(int choice) const { return joint[choice==1 ? Neck : choice==2 ? Chest : Head]; }
-    int read_count() const { return *std::max_element(joint.begin(),joint.end())+1; }
+    int read_count() const { return std::max(model_count,*std::max_element(joint.begin(),joint.end())+1); }
 };
 inline Layout from_names(const std::vector<std::string>& names) {
     constexpr std::array<std::array<std::string_view,3>,JointCount> aliases{{
@@ -36,7 +37,7 @@ inline Layout from_names(const std::vector<std::string>& names) {
         {"leg_upper_l","thigh_l",""},{"leg_lower_l","calf_l",""},{"ankle_l","foot_l",""},
         {"leg_upper_r","thigh_r",""},{"leg_lower_r","calf_r",""},{"ankle_r","foot_r",""}
     }};
-    Layout layout; layout.joint.fill(-1); layout.named=true;
+    Layout layout; layout.joint.fill(-1); layout.named=true; layout.model_count=std::min(128,static_cast<int>(names.size()));
     for (size_t i=0;i<names.size();++i) {
         auto name=names[i];
         std::transform(name.begin(),name.end(),name.begin(),[](unsigned char c){return static_cast<char>(std::tolower(c));});

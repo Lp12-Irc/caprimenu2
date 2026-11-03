@@ -3,8 +3,8 @@
 #pragma once
 #include <cstdint>
 namespace offsets {
-inline constexpr uint32_t BUILD_NUMBER = 14194;
-inline constexpr uint32_t CLIENT_TIMESTAMP = 0x6ae4fb84;
+inline constexpr uint32_t BUILD_NUMBER = 14195;
+inline constexpr uint32_t CLIENT_TIMESTAMP = 0x6ae91e98;
 inline constexpr uint32_t CLIENT_IMAGE_SIZE = 0x29a2000;
 inline constexpr uint32_t GLOBAL_CURTIME = 0x30; // clock_provenance.json
 inline constexpr uint32_t m_iTeamNum = 0x3e7; // C_BaseEntity
@@ -13,6 +13,7 @@ inline constexpr uint32_t m_iHealth = 0x34c; // C_BaseEntity
 inline constexpr uint32_t m_iMaxHealth = 0x348; // C_BaseEntity
 inline constexpr uint32_t m_hOwnerEntity = 0x520; // C_BaseEntity
 inline constexpr uint32_t m_pCollision = 0x340; // C_BaseEntity
+inline constexpr uint32_t m_vecAbsVelocity = 0x3f8; // C_BaseEntity
 inline constexpr uint32_t m_vecMins = 0x40; // CCollisionProperty
 inline constexpr uint32_t m_vecMaxs = 0x4c; // CCollisionProperty
 inline constexpr uint32_t m_bPawnIsAlive = 0x934; // CCSPlayerController
@@ -42,6 +43,7 @@ inline constexpr uint32_t m_vecAbsOrigin = 0xc8; // CGameSceneNode
 inline constexpr uint32_t m_bDormant = 0x103; // CGameSceneNode
 inline constexpr uint32_t m_modelState = 0x140; // CSkeletonInstance
 inline constexpr uint32_t m_hModel = 0xa0; // CModelState
+inline constexpr uint32_t m_ModelName = 0xa8; // CModelState
 inline constexpr uint32_t m_AttributeManager = 0x1290; // C_EconEntity
 inline constexpr uint32_t m_Item = 0x50; // C_AttributeContainer
 inline constexpr uint32_t m_iItemDefinitionIndex = 0x1ba; // C_EconItemView
@@ -61,7 +63,7 @@ inline constexpr uint32_t m_nBombSite = 0x128c; // C_PlantedC4
 inline constexpr uint32_t m_flDefuseLength = 0x12d4; // C_PlantedC4
 inline constexpr uint32_t m_designerName = 0x20; // CEntityIdentity
 inline constexpr uint32_t m_pEntity = 0x10; // CEntityInstance
-// Entity layout verified against the local controller and pawn handles in build 14194.
+// Entity layout verified against the local controller and pawn handles in build 14195.
 inline constexpr uint32_t GLOBAL_MAP_NAME = 0x188; // map_camera_provenance.json, live map name
 inline constexpr uint32_t MODEL_BONE_NAME_COUNT = 0x160; // rig_provenance.json, live CModel
 inline constexpr uint32_t MODEL_BONE_NAME_DATA = 0x168; // rig_provenance.json, live CModel
@@ -71,14 +73,14 @@ inline constexpr uint32_t ENT_PAWN_PTR_OFFSET = 0;
 inline constexpr uint32_t m_pBoneArray = 0x80; // CModelState; verified position/scale/quaternion records.
 }
 namespace game_offsets {
-inline constexpr uintptr_t dwEntityList = 0x271eb28;
+inline constexpr uintptr_t dwEntityList = 0x271eba8;
 inline constexpr uintptr_t dwGameEntitySystem_highestEntityIndex = 0x2120;
-inline constexpr uintptr_t dwLocalPlayerController = 0x25413f8;
-inline constexpr uintptr_t dwViewMatrix = 0x256f1d0;
+inline constexpr uintptr_t dwLocalPlayerController = 0x2541538;
+inline constexpr uintptr_t dwViewMatrix = 0x256f250;
 inline constexpr uintptr_t dwGlobalVars = 0x2234108;
 inline constexpr uintptr_t dwPlantedC4 = 0x24cfb60;
-inline constexpr uintptr_t dwViewAngles = 0x2580008;
-inline constexpr uintptr_t dwSensitivity = 0x2566bc8;
+inline constexpr uintptr_t dwViewAngles = 0x2580098;
+inline constexpr uintptr_t dwSensitivity = 0x2566c48;
 inline constexpr uintptr_t dwSensitivity_sensitivity = 0x58;
 inline constexpr uintptr_t dwBuildNumber = 0x6ba028;
 }

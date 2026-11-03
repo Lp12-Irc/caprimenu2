@@ -26,7 +26,7 @@ int main(int argc,char** argv) {
     RenderCapture renderer;
     if (capture && !renderer.init(sw,sh)) { std::puts("FAIL: offscreen renderer"); memory.detach(); return 8; }
     Esp esp; if (capture) esp.init(renderer.device());
-    Config cfg; cfg.item_esp = cfg.spectator_list = cfg.bomb_timer = cfg.esp_utilities = true;
+    Config cfg; cfg.item_esp = cfg.spectator_list = cfg.bomb_timer = true;
     cfg.radar_sz=420; cfg.radar_x=2; cfg.radar_y=8;
     bool captured=false;
     for (int sample=0;sample<(capture_defuse ? 225 : 5);++sample) {

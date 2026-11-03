@@ -1,2 +1,0 @@
-Apresentacao do overlay sem espera explicita por VSync, fila GPU limitada a um quadro quando a interface DXGI esta disponivel. Intervalo de espera de 4 ms no render limita CPU; workers permanecem a 2 ms. Perfil com aim_smooth=1 e aim_delay_ms=0; outros campos preservados. Nao houve alteracao de offsets.
-Build Release, quatro testes CTest e overlay_test passaram. Nova regressao: 120 atualizacoes de alvo movel, camera e mouse simulados, erro inferior a um pixel. Isto nao mede latencia real da partida; nenhuma automacao de mouse foi testada no jogo nesta revisao.

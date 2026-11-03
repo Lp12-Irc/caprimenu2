@@ -1,0 +1,49 @@
+[
+  {
+    "path": "ferramentas/map-collision/cs_italy/maps/cs_italy/world_physics_physics.glb",
+    "size": 141963472,
+    "sha256": "8fbe5375cf4cd91da6d80936877c6180fcd4de4de13cdd628dfe95e325fd5dc3",
+    "parts": [
+      "partes/000/0000.part",
+      "partes/000/0001.part"
+    ]
+  },
+  {
+    "path": "ferramentas/map-collision/de_ancient/maps/de_ancient/world_physics_physics.glb",
+    "size": 104537132,
+    "sha256": "91090ea0c80e067fe5e4411c60c2b527a1c55f049a3461038f5664916cff7b77",
+    "parts": [
+      "partes/001/0000.part",
+      "partes/001/0001.part"
+    ]
+  },
+  {
+    "path": "ferramentas/map-collision/de_inferno/maps/de_inferno/world_physics_physics.glb",
+    "size": 295289832,
+    "sha256": "2cbdc6dbb343222dade6f45cb0d58dd60df1c2afec86b49211a079b7a5c76e3c",
+    "parts": [
+      "partes/002/0000.part",
+      "partes/002/0001.part",
+      "partes/002/0002.part",
+      "partes/002/0003.part"
+    ]
+  },
+  {
+    "path": "ferramentas/map-collision/de_train/maps/de_train/world_physics_physics.glb",
+    "size": 170061556,
+    "sha256": "4a98885b9c85d7fe120deddfd17d8d11dc13dcb103bfbb5b8b27f48ed659405f",
+    "parts": [
+      "partes/003/0000.part",
+      "partes/003/0001.part"
+    ]
+  },
+  {
+    "path": "ferramentas/source2viewer/bin/Source2Viewer-CLI.exe",
+    "size": 113264360,
+    "sha256": "ef9f6fb3943c30b73f0991bce6654128727b0807968f7997a6bb014efbec8830",
+    "parts": [
+      "partes/004/0000.part",
+      "partes/004/0001.part"
+    ]
+  }
+]

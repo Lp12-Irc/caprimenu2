@@ -1,3 +1,5 @@
+Chaves online: veja CHAVES-ONLINE.md. O cliente atual valida pela chave no servidor do administrador; envie o novo Capri-Cliente.zip, que nao inclui banco nem chave salva.
+
 Atualizacao de 31/10/2026: veja CORRECOES-CS2.md para a integracao atual, testes e limitacoes. O texto abaixo registra a versao anterior da interface.
 
 # Capri — atualização da interface

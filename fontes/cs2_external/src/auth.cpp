@@ -1,5 +1,6 @@
 // language: C++20, file: auth.cpp, target: Windows 11 x64, MSVC
 #include "auth.hpp"
+#include "version.hpp"
 #include "json.hpp"
 #include "auth_local.hpp"
 #include "string_enc.hpp"
@@ -7,23 +8,9 @@
 #include <winhttp.h>
 #include <iphlpapi.h>
 #include <intrin.h>
+#include <filesystem>
 #pragma comment(lib, "winhttp.lib")
 #pragma comment(lib, "iphlpapi.lib")
-
-// Quick JSON field extractor — no full library needed in auth module
-static std::string jfield(const std::string& json, const std::string& key) {
-    std::string search = "\"" + key + "\"";
-    auto pos = json.find(search);
-    if (pos == std::string::npos) return {};
-    pos = json.find(':', pos);
-    if (pos == std::string::npos) return {};
-    ++pos;
-    while (pos < json.size() && (json[pos] == ' ' || json[pos] == '"')) ++pos;
-    auto end = pos;
-    while (end < json.size() && json[end] != '"' && json[end] != ',' &&
-           json[end] != '}') ++end;
-    return json.substr(pos, end - pos);
-}
 
 std::string Auth::get_hwid() {
     // Volume serial of the C: drive.
@@ -51,93 +38,70 @@ std::string Auth::get_hwid() {
     return hwid;
 }
 
-std::string Auth::http_post(const std::wstring& host, const std::wstring& path,
-                             const std::string& body) {
-    HINTERNET session = WinHttpOpen(L"WinHTTP/1.0",
-                                    WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-                                    WINHTTP_NO_PROXY_NAME,
-                                    WINHTTP_NO_PROXY_BYPASS, 0);
-    if (!session) return {};
-    WinHttpSetTimeouts(session, 5000, 5000, 5000, 5000);
 
-    HINTERNET conn = WinHttpConnect(session, host.c_str(),
-                                    INTERNET_DEFAULT_HTTPS_PORT, 0);
-    HINTERNET req  = conn ? WinHttpOpenRequest(
-        conn, L"POST", path.c_str(), nullptr,
-        WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
-        WINHTTP_FLAG_SECURE) : nullptr;
-
-    std::string result;
-    if (req) {
-        // Ignore cert errors on self-signed VPS — remove in production if using valid cert
-        DWORD opt = SECURITY_FLAG_IGNORE_UNKNOWN_CA | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE |
-                    SECURITY_FLAG_IGNORE_CERT_CN_INVALID | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
-        WinHttpSetOption(req, WINHTTP_OPTION_SECURITY_FLAGS, &opt, sizeof(opt));
-
-        BOOL ok = WinHttpSendRequest(req,
-            L"Content-Type: application/json\r\n", (DWORD)-1,
-            const_cast<char*>(body.c_str()),
-            static_cast<DWORD>(body.size()),
-            static_cast<DWORD>(body.size()), 0);
-
-        if (ok && WinHttpReceiveResponse(req, nullptr)) {
-            DWORD avail = 0;
-            while (WinHttpQueryDataAvailable(req, &avail) && avail) {
-                std::string chunk(avail, '\0');
-                DWORD read = 0;
-                WinHttpReadData(req, chunk.data(), avail, &read);
-                chunk.resize(read);
-                result += chunk;
+static std::wstring auth_endpoint() {
+    wchar_t value[2048]{};
+    GetPrivateProfileStringW(L"auth",L"endpoint",L"",value,2048,std::filesystem::absolute("HillBlack.ini").c_str());
+    return value;
+}
+std::string Auth::http_post(const std::wstring& url,const std::string& body) {
+    URL_COMPONENTS parts{};parts.dwStructSize=sizeof(parts);
+    parts.dwHostNameLength=parts.dwUrlPathLength=parts.dwExtraInfoLength=DWORD(-1);
+    if(!WinHttpCrackUrl(url.c_str(),0,ICU_REJECT_USERPWD,&parts))return {};
+    const std::wstring host(parts.lpszHostName,parts.dwHostNameLength);
+    const bool secure=parts.nScheme==INTERNET_SCHEME_HTTPS;
+    if(!secure && !(parts.nScheme==INTERNET_SCHEME_HTTP && (host==L"127.0.0.1" || host==L"localhost")))return {};
+    std::wstring path(parts.lpszUrlPath,parts.dwUrlPathLength);
+    if(path.empty())path=L"/validate";
+    if(parts.dwExtraInfoLength)return {};
+    HINTERNET session=WinHttpOpen(L"Capri/1.0",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0);
+    if(!session)return {};
+    WinHttpSetTimeouts(session,5000,5000,5000,5000);
+    HINTERNET connection=WinHttpConnect(session,host.c_str(),parts.nPort,0);
+    HINTERNET request=connection ? WinHttpOpenRequest(connection,L"POST",path.c_str(),nullptr,WINHTTP_NO_REFERER,WINHTTP_DEFAULT_ACCEPT_TYPES,secure?WINHTTP_FLAG_SECURE:0) : nullptr;
+    std::string response;
+    if(request) {
+        DWORD redirect=WINHTTP_OPTION_REDIRECT_POLICY_NEVER;
+        WinHttpSetOption(request,WINHTTP_OPTION_REDIRECT_POLICY,&redirect,sizeof(redirect));
+        BOOL sent=WinHttpSendRequest(request,L"Content-Type: application/json\r\n",DWORD(-1),const_cast<char*>(body.data()),DWORD(body.size()),DWORD(body.size()),0);
+        if(sent && WinHttpReceiveResponse(request,nullptr)) {
+            DWORD status=0,length=sizeof(status);
+            WinHttpQueryHeaders(request,WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER,WINHTTP_HEADER_NAME_BY_INDEX,&status,&length,WINHTTP_NO_HEADER_INDEX);
+            if(status==200) {
+                DWORD available=0;
+                while(WinHttpQueryDataAvailable(request,&available) && available) {
+                    if(response.size()+available>16384){response.clear();break;}
+                    std::string chunk(available,'\0');DWORD count=0;
+                    if(!WinHttpReadData(request,chunk.data(),available,&count) || !count){response.clear();break;}
+                    chunk.resize(count);response+=chunk;
+                }
             }
         }
-        WinHttpCloseHandle(req);
+        WinHttpCloseHandle(request);
     }
-    if (conn) WinHttpCloseHandle(conn);
-    WinHttpCloseHandle(session);
-    return result;
+    if(connection)WinHttpCloseHandle(connection);
+    WinHttpCloseHandle(session);return response;
 }
-
 AuthInfo Auth::validate_online(const std::string& key) {
-    if (local_auth_mode()) return validate_local_key(key, get_hwid());
-    AuthInfo info;
-    info.hwid = get_hwid();
-
-    // API host/path — XOR-encrypted; decrypted at runtime
-    // Replace with your VPS address
-    auto host = ENC("api.hillblack.cc").decrypt();  // change to your domain
-    auto path = ENC("/validate").decrypt();
-    std::wstring whost(host.begin(), host.end());
-    std::wstring wpath(path.begin(), path.end());
-
-    std::string body = "{\"key\":\"" + key + "\",\"hwid\":\"" + info.hwid + "\"}";
-    std::string resp = http_post(whost, wpath, body);
-
-    if (resp.empty()) { info.result = AuthResult::NET_ERROR; return info; }
-
-    info.expires_at = jfield(resp, "expires_at");
-    info.message    = jfield(resp, "message");
-
-    std::string valid_str = jfield(resp, "valid");
-    std::string reason    = jfield(resp, "reason");
-
-    if (valid_str == "true") {
-        info.result = AuthResult::OK;
-    } else if (reason == "expired") {
-        info.result = AuthResult::EXPIRED;
-    } else if (reason == "hwid_mismatch") {
-        info.result = AuthResult::HWID_MISMATCH;
-    } else {
-        info.result = AuthResult::BAD_KEY;
-    }
+    AuthInfo info;info.hwid=get_hwid();
+    auto endpoint=auth_endpoint();
+    if(endpoint.empty()){info.message="Servico de chaves nao configurado. Use o pacote atualizado enviado pelo administrador.";return info;}
+    const auto response=http_post(endpoint,nlohmann::json{{"key",key},{"client_build",CAPRI_CLIENT_BUILD}}.dump());
+    if(response.empty()){info.message="Nao foi possivel conectar ao servidor de chaves. O PC do administrador e o servico precisam estar ligados.";return info;}
+    try {
+        const auto data=nlohmann::json::parse(response);
+        if(!data.is_object() || !data.contains("valid") || !data["valid"].is_boolean())return info;
+        info.package_sha256=data.value("package_sha256",std::string{});info.package_size=data.value("package_size",std::uint64_t(0));
+        info.latest_build=data.value("latest_build",0);info.min_build=data.value("min_build",0);
+        info.version=data.value("version",std::string{});info.download_url=data.value("download_url",std::string{});info.release_notes=data.value("release_notes",std::string{});
+        info.message=data.value("message",std::string{});
+        info.expires_at=data.value("expires_at",std::string{});
+        if(data["valid"].get<bool>())info.result=AuthResult::OK;
+        else info.result=data.value("reason",std::string{})=="expired"?AuthResult::EXPIRED:AuthResult::BAD_KEY;
+        if(info.min_build>CAPRI_CLIENT_BUILD || data.value("reason",std::string{})=="update_required")info.result=AuthResult::UPDATE_REQUIRED;
+    }catch(...){info.result=AuthResult::NET_ERROR;}
     return info;
 }
-
-bool Auth::revalidate(const std::string& key, const std::string& hwid) {
-    if (local_auth_mode()) return validate_local_key(key, hwid).result == AuthResult::OK;
-    auto host = ENC("api.hillblack.cc").decrypt();
-    std::wstring whost(host.begin(), host.end());
-    std::string body = "{\"key\":\"" + key + "\",\"hwid\":\"" + hwid + "\"}";
-    std::string resp = http_post(whost, L"/validate", body);
-    try { return nlohmann::json::parse(resp).value("valid", false); }
-    catch (...) { return false; }
+bool Auth::revalidate(const std::string& key,const std::string& hwid) {
+    return validate_online(key).result==AuthResult::OK;
 }

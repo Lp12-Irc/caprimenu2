@@ -6,6 +6,8 @@
 #include <vector>
 #include <cmath>
 #include <unordered_map>
+#include <memory>
+class MapCollision;
 
 struct Vec3 {
     float x = 0, y = 0, z = 0;
@@ -17,6 +19,8 @@ struct Vec3 {
     bool finite() const { return std::isfinite(x) && std::isfinite(y) && std::isfinite(z); }
 };
 
+inline constexpr ULONGLONG VISUAL_GRACE_MS=120;
+
 struct Matrix4x4 { float m[4][4]{}; };
 
 struct BoneMat { // Source 2 position, scale, quaternion; 32 bytes.
@@ -27,9 +31,14 @@ struct BoneMat { // Source 2 position, scale, quaternion; 32 bytes.
 };
 static_assert(sizeof(BoneMat) == 32);
 
+struct ModelInfo { std::string name; std::vector<std::string> bones; };
+
 struct PlayerEnt {
     uintptr_t ctrl   = 0;
     uintptr_t pawn   = 0;
+    uintptr_t scene=0, model_binding=0;
+    uint32_t pawn_handle=0;
+    ULONGLONG pose_at=0;
 
     int   team       = 0;
     bool  alive      = false;
@@ -41,11 +50,15 @@ struct PlayerEnt {
     bool  defusing   = false;
     float flash      = 0.f;
 
+    Vec3 velocity{};
+    bool velocity_valid=false;
+    bool state_valid=false;
     Vec3 origin{};
     Vec3 head{};
     Vec3 eye{};
     bool bones_valid = false;
     bones::Layout rig;
+    std::shared_ptr<const ModelInfo> model_info;
     Vec3 collision_min{},collision_max{};
     bool collision_valid=false;
     uint64_t spotted_by = 0;
@@ -78,7 +91,10 @@ struct PlayerEnt {
         result=value.pos(); return true;
     }
     bool aim_point(int choice,Vec3& result) const {
-        return bones_valid && bone_point(rig.target(choice),result) && result.z-origin.z>=8.f;
+        Vec3 top{};
+        const float minimum_head=collision_valid ? (collision_max.z-collision_min.z)*.55f : 36.f;
+        return bones_valid && bone_point(rig.target(0),top) && top.z-origin.z>=minimum_head &&
+            bone_point(rig.target(choice),result) && result.z-origin.z>=(top.z-origin.z)*.5f;
     }
 };
 
@@ -106,19 +122,30 @@ struct GameState {
     bool warmup     = false;
     int  local_team = 0;
 };
-struct CacheOptions { bool bones=true,inventory=true,items=true; };
+struct CacheOptions { bool bones=true,inventory=true,items=true,throttle_details=false; bool recoil=true,bomb=true,observers=true;
+    bool weapons=true,names=true,angles=true,crosshair=true;
+};
 
 class EntityCache {
 public:
     bool init(Memory* mem);
     bool resolve();
     void update(CacheOptions options={});
+    EntityCache snapshot() const;
+    bool refresh_pose(const PlayerEnt&,PlayerEnt&) const;
+    bool current_local_team(int&) const;
+    bool current_enemy(const PlayerEnt&,int local_team) const;
+    bool clear_path(const Vec3&,const Vec3&) const;
+    bool visibility_ready() const {return bool(collision_);}
+    bool visual_pose(const PlayerEnt&,PlayerEnt&,ULONGLONG age_ms,bool validate_live=false) const;
     bool current_bomb_state(BombState&) const;
 
     const std::vector<PlayerEnt>& players()      const { return players_; }
     const PlayerEnt* local() const { return local_index_ < players_.size() ? &players_[local_index_] : nullptr; }
     const Matrix4x4&               view_matrix()  const { return vm_; }
     bool current_view_matrix(Matrix4x4& value) const;
+    bool current_observer_target(uintptr_t& target) const;
+    bool current_crosshair_target(uintptr_t& target) const;
     const std::string& map_name() const { return map_name_; }
     const BombState&               bomb()         const { return bomb_; }
     const std::vector<WorldItem>& items() const { return items_; }
@@ -144,6 +171,7 @@ public:
     uintptr_t view_angles_addr = 0;
 
 private:
+    bool read_pose(PlayerEnt&,uintptr_t scene) const;
     void update_vm();
     void update_entities();
     void update_bomb();
@@ -159,15 +187,23 @@ private:
     Matrix4x4  vm_{};
     BombState  bomb_{};
     std::vector<WorldItem> items_;
-    uintptr_t system_ = 0;
+    uintptr_t system_ = 0, controller_chunk_=0;
+    struct Detail {
+        uintptr_t ctrl=0,pawn=0,name_ptr=0; ULONGLONG next_name=0,next_weapon=0;
+        std::array<char,128> name{};
+        uint16_t weapon_id=0;int clip=0,reserve=0;std::vector<uint16_t> utilities;
+    };
+    std::array<Detail,65> details_{};
     uintptr_t client_ = 0;
     bool ready_ = false;
     float sensitivity_ = 1.f;
     ULONGLONG last_items_ = 0;
     std::string status_ = "Aguardando dados do CS2";
     std::unordered_map<uintptr_t,bones::Layout> model_rigs_;
+    std::unordered_map<uintptr_t,std::shared_ptr<const ModelInfo>> model_infos_;
     ULONGLONG sampled_at_ = 0;
     std::string map_name_;
+    std::shared_ptr<const MapCollision> collision_;
     ULONGLONG next_map_read_=0,next_item_scan_=0;
     std::vector<WorldItem> pending_items_;
     int item_cursor_=65,item_last_=0;

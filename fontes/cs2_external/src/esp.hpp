@@ -4,6 +4,7 @@
 #include "entities.hpp"
 #include "config.hpp"
 #include "radar.hpp"
+#include "neon_model.hpp"
 struct ImDrawList;
 
 struct Scr { float x, y; bool vis; };
@@ -13,7 +14,7 @@ class Esp {
 public:
     Scr w2s(const Vec3& world, const Matrix4x4& vm, int sw, int sh) const;
     ScreenBounds project_bounds(const PlayerEnt&,const Matrix4x4&,int sw,int sh) const;
-    void init(ID3D11Device* device,const std::filesystem::path& assets="assets/radar") { radar_.init(device,assets); }
+    void init(ID3D11Device* device,const std::filesystem::path& assets="assets/radar") { radar_.init(device,assets); neon_.init(assets.parent_path()/"models"); }
 
     void render(const EntityCache& cache, const Config& cfg,
                 ImDrawList* dl, int sw, int sh);
@@ -30,5 +31,11 @@ private:
     void draw_fov_circle(ImDrawList*, float fov, const Matrix4x4&, int sw, int sh);
     void draw_bomb_timer(ImDrawList*, const BombState&, const Config&, int sw, int sh);
     void draw_spec_list (ImDrawList*, const EntityCache&, int sw, int sh);
+    std::vector<PlayerEnt> frame_players_,pose_history_;
+    Matrix4x4 last_camera_{};
+    ULONGLONG camera_at_=0;
+    int camera_width_=0,camera_height_=0,visual_team_=0;
+    std::string visual_map_;
     RadarRenderer radar_;
+    NeonModels neon_;
 };

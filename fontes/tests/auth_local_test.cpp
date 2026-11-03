@@ -19,7 +19,9 @@ int main() {
         "('expired','active','2000-01-01T00:00:00Z',''),('malformed','active','bad-date',''),"
         "('bound','active','never','other-machine'),('future','active','2099-01-01T00:00:00+00:00','');", nullptr, nullptr, nullptr);
     sqlite3_close(db);
-    check(local_auth_mode(), "local mode");
+    check(!local_auth_mode(), "online mode is default");
+    WritePrivateProfileStringW(L"auth",L"mode",L"local",std::filesystem::absolute("HillBlack.ini").c_str());
+    check(local_auth_mode(), "explicit local mode");
     check(validate_local_key("missing", "machine").result == AuthResult::BAD_KEY, "unknown rejected");
     check(validate_local_key("revoked", "machine").result == AuthResult::BAD_KEY, "revoked rejected");
     check(validate_local_key("expired", "machine").result == AuthResult::EXPIRED, "expired rejected");
@@ -31,6 +33,7 @@ int main() {
     check(validate_local_key("future", "machine").result == AuthResult::OK, "future expiry accepted");
     std::filesystem::remove("hillblack.db");
     check(validate_local_key("valid", "machine").result == AuthResult::NET_ERROR, "missing database rejected");
+    std::filesystem::remove("HillBlack.ini");
     std::filesystem::current_path(initial);
     std::filesystem::remove(temp);
     return failures ? 1 : 0;

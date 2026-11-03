@@ -5,7 +5,7 @@
 
 bool local_auth_mode() {
     wchar_t mode[32]{};
-    GetPrivateProfileStringW(L"auth", L"mode", L"local", mode, 32,
+    GetPrivateProfileStringW(L"auth", L"mode", L"online", mode, 32,
         std::filesystem::absolute("HillBlack.ini").c_str());
     return _wcsicmp(mode, L"local") == 0;
 }

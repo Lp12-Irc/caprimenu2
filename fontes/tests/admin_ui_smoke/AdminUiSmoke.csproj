@@ -5,9 +5,13 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>true</SelfContained>
+    <SelfContained>false</SelfContained>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../admin_panel/HillBlack.Admin.csproj" />
+    <EmbeddedResource Include="../../../Atualizar-ADM.ps1" LogicalName="Capri.Atualizar-ADM.ps1" />
+    <Compile Include="../../admin_panel/*.cs" Exclude="../../admin_panel/Program.cs" Link="Admin/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../../assets/capri.jpg" LogicalName="Capri.Avatar.jpg" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 </Project>

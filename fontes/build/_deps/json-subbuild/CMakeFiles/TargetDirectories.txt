@@ -1,3 +1,0 @@
-C:/Users/leona/Downloads/Capri-Completo/fontes/build/_deps/json-subbuild/CMakeFiles/json-populate.dir
-C:/Users/leona/Downloads/Capri-Completo/fontes/build/_deps/json-subbuild/CMakeFiles/ALL_BUILD.dir
-C:/Users/leona/Downloads/Capri-Completo/fontes/build/_deps/json-subbuild/CMakeFiles/ZERO_CHECK.dir

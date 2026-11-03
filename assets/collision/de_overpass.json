@@ -1,0 +1,21 @@
+{
+  "format": 2,
+  "leaf_size": 64,
+  "triangles": 1338609,
+  "nodes": 65535,
+  "vertices": 695497,
+  "bytes": 11207068,
+  "raw_bounds_min": [
+    -5328.158203125,
+    -4264.0,
+    -20.061748504638672
+  ],
+  "raw_bounds_max": [
+    1178.45166015625,
+    3744.086181640625,
+    2549.51904296875
+  ],
+  "map": "de_overpass",
+  "vpk_sha256": "001aae829ea08fea99048d7ab8e17b6265e3e360a0385bc00aaa8796c40f96c9",
+  "source": "Source 2 Viewer: world_physics.vmdl_c physics export; raw Source coordinates; static geometry only"
+}

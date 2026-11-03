@@ -1,6 +1,6 @@
 """Generate only the fields Capri uses from a local cs2-dumper extraction."""
 import json
-import hashlib, struct
+import hashlib, struct, re
 from pathlib import Path
 ROOT=Path(__file__).parent
 dump=ROOT/'cs2-local'
@@ -13,19 +13,29 @@ pe=struct.unpack_from('<I',client_bytes,0x3c)[0]
 timestamp=struct.unpack_from('<I',client_bytes,pe+8)[0]
 image_size=struct.unpack_from('<I',client_bytes,pe+0x50)[0]
 clock=json.loads((dump/'clock_provenance.json').read_text())
-if clock['client_sha256'] != hashlib.sha256(client_bytes).hexdigest():
+if clock['client_sha256'] != hashlib.sha256(client_bytes).hexdigest() or clock['build'] != info['build_number']:
     raise RuntimeError('Clock derivation belongs to a different client.dll')
 rig=json.loads((dump/'rig_provenance.json').read_text())
 if rig['client_sha256'] != hashlib.sha256(client_bytes).hexdigest() or rig['build'] != info['build_number']:
     raise RuntimeError('Rig derivation belongs to a different client.dll or build')
+steam_manifest=(client_path.parents[6]/'appmanifest_730.acf').read_text()
+steam_build=re.search(r'"buildid"\s+"(\d+)"',steam_manifest)
+if not steam_build: raise RuntimeError('Installed Steam build ID not found')
+extraction=json.loads((dump/'extraction.json').read_text())
+if extraction['client_sha256']!=hashlib.sha256(client_bytes).hexdigest() or extraction['build_number']!=info['build_number']:
+    raise RuntimeError('Schema extraction belongs to another binary or build')
+for filename,digest in extraction['files'].items():
+    if hashlib.sha256((dump/filename).read_bytes()).hexdigest()!=digest:
+        raise RuntimeError(f'Extraction file changed: {filename}')
 provenance={'build_number':info['build_number'],'dump_timestamp':info['timestamp'],
- 'steam_build_id':'26334290','client_sha256':hashlib.sha256(client_bytes).hexdigest(),
+ 'steam_build_id':steam_build[1],'client_sha256':hashlib.sha256(client_bytes).hexdigest(),
  'client_pe_timestamp':timestamp,'client_image_size':image_size,
  'source':'https://github.com/a2x/cs2-dumper','source_commit':'21ee85107074fdf0347dc8afd4a8c3dd8d2398e2',
+ 'dumper_sha256':extraction['dumper_sha256'],
  'method':'Local cs2-dumper extraction from running process using native read-only memory access; entity and bone layouts checked against live controller and pawn references.'}
 (dump/'provenance.json').write_text(json.dumps(provenance,indent=2))
 mapping={
- 'C_BaseEntity':['m_iTeamNum','m_pGameSceneNode','m_iHealth','m_iMaxHealth','m_hOwnerEntity','m_pEntity','m_pCollision'],
+ 'C_BaseEntity':['m_iTeamNum','m_pGameSceneNode','m_iHealth','m_iMaxHealth','m_hOwnerEntity','m_pEntity','m_pCollision','m_vecAbsVelocity'],
  'CCollisionProperty':['m_vecMins','m_vecMaxs'],
  'CCSPlayerController':['m_bPawnIsAlive','m_hPlayerPawn','m_hObserverPawn','m_sSanitizedPlayerName','m_iPing','m_bPawnHasHelmet'],
  'C_CSPlayerPawn':['m_ArmorValue','m_bIsScoped','m_bIsDefusing','m_angEyeAngles','m_iShotsFired','m_entitySpottedState','m_pAimPunchServices','m_iIDEntIndex'],
@@ -35,7 +45,7 @@ mapping={
  'C_BaseModelEntity':['m_vecViewOffset'],
  'CGameSceneNode':['m_vecAbsOrigin','m_bDormant'],
  'CSkeletonInstance':['m_modelState'],
- 'CModelState':['m_hModel'],
+ 'CModelState':['m_hModel','m_ModelName'],
  'C_EconEntity':['m_AttributeManager'],
  'C_AttributeContainer':['m_Item'],
  'C_EconItemView':['m_iItemDefinitionIndex'],
@@ -59,7 +69,7 @@ for cls,names in mapping.items():
     for name in names:
         if name=='m_pEntity' and cls=='C_BaseEntity': continue
         lines.append(f'inline constexpr uint32_t {name} = {hex(fields[name])}; // {cls}')
-lines+=['// Entity layout verified against the local controller and pawn handles in build 14194.',
+lines+=[f'// Entity layout verified against the local controller and pawn handles in build {info["build_number"]}.',
         'inline constexpr uint32_t GLOBAL_MAP_NAME = 0x188; // map_camera_provenance.json, live map name',
         f'inline constexpr uint32_t MODEL_BONE_NAME_COUNT = {rig["CModel_bone_name_count"]}; // rig_provenance.json, live CModel',
         f'inline constexpr uint32_t MODEL_BONE_NAME_DATA = {rig["CModel_bone_name_data"]}; // rig_provenance.json, live CModel',

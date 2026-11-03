@@ -1,0 +1,569 @@
+{
+  "build": 14195,
+  "client_sha256": "57ee728e15c50881070d847d7516d632d70456e0648d486a53f2528ec53f6ee0",
+  "vpk_index_sha256": "4441f84f7ea07cc04b8ab2f83ded550ee063e6b1a5ef57bc134bfab3ed60df99",
+  "exporter": "Source2Viewer-CLI 20.1",
+  "source": "Installed CS2 agents/models/*.vmdl_c; no materials or textures",
+  "models": {
+    "agents/models/ctm_diver/ctm_diver_varianta.vmdl": {
+      "file": "ctm_diver_varianta.cnm",
+      "vertices": 18002,
+      "triangles": 33083,
+      "bones": 86,
+      "sha256": "66814f4f295180543ab7d23953fdfb220df70ac38a035678e641867e9f6fb731"
+    },
+    "agents/models/ctm_diver/ctm_diver_variantb.vmdl": {
+      "file": "ctm_diver_variantb.cnm",
+      "vertices": 14107,
+      "triangles": 26089,
+      "bones": 86,
+      "sha256": "7fb153bd9f07a0d3fa55ee4d199df7b36775f4d27aa65a2aea77cf4b645ef36a"
+    },
+    "agents/models/ctm_diver/ctm_diver_variantc.vmdl": {
+      "file": "ctm_diver_variantc.cnm",
+      "vertices": 14088,
+      "triangles": 26336,
+      "bones": 86,
+      "sha256": "f543cb4279e61d2fa3176a796014ab579eb3bc889107484c11568dce92f0f14c"
+    },
+    "agents/models/ctm_fbi/ctm_fbi.vmdl": {
+      "file": "ctm_fbi.cnm",
+      "vertices": 11261,
+      "triangles": 21710,
+      "bones": 94,
+      "sha256": "1bea29dd4473ba1950ccdd7f3d289957801a06f9a0233c511e11e7a169c20706"
+    },
+    "agents/models/ctm_fbi/ctm_fbi_varianta.vmdl": {
+      "file": "ctm_fbi_varianta.cnm",
+      "vertices": 11479,
+      "triangles": 22104,
+      "bones": 93,
+      "sha256": "d6a2ecc50cb91e2233373ae65893f2a42a370c676e533dcbcf671f008d56b416"
+    },
+    "agents/models/ctm_fbi/ctm_fbi_variantb.vmdl": {
+      "file": "ctm_fbi_variantb.cnm",
+      "vertices": 11858,
+      "triangles": 22970,
+      "bones": 94,
+      "sha256": "9dbdab78ac146ca8e6a067fcac024e6cad4ca3ffa8ccfd9f5eec56546a89de12"
+    },
+    "agents/models/ctm_fbi/ctm_fbi_variantc.vmdl": {
+      "file": "ctm_fbi_variantc.cnm",
+      "vertices": 10686,
+      "triangles": 20594,
+      "bones": 93,
+      "sha256": "b29cdee33cc151a8abccf69ba6943685ed48751b0cc85c4529887f9a3dbba393"
+    },
+    "agents/models/ctm_fbi/ctm_fbi_variantd.vmdl": {
+      "file": "ctm_fbi_variantd.cnm",
+      "vertices": 11310,
+      "triangles": 21771,
+      "bones": 93,
+      "sha256": "9a4a4d04d003d0638025df430407675e5d837aee148659549cf7b7cd289a6d61"
+    },
+    "agents/models/ctm_fbi/ctm_fbi_variante.vmdl": {
+      "file": "ctm_fbi_variante.cnm",
+      "vertices": 10994,
+      "triangles": 21165,
+      "bones": 93,
+      "sha256": "80c1fe3beb2dae67f2a622aca5c5523cafbfd47894bf5989f1fea6818e84734d"
+    },
+    "agents/models/ctm_fbi/ctm_fbi_variantf.vmdl": {
+      "file": "ctm_fbi_variantf.cnm",
+      "vertices": 10994,
+      "triangles": 21165,
+      "bones": 93,
+      "sha256": "0bd7fa51aadf7bb6edc4513e3a4362bf7cc1b7e5a86cbe857ac912616c62c9b1"
+    },
+    "agents/models/ctm_fbi/ctm_fbi_variantg.vmdl": {
+      "file": "ctm_fbi_variantg.cnm",
+      "vertices": 10727,
+      "triangles": 20654,
+      "bones": 93,
+      "sha256": "1ea01ac5f7f9737649c604045c6037e36ea1c1f28fcae1c334d72a92f0317e21"
+    },
+    "agents/models/ctm_fbi/ctm_fbi_varianth.vmdl": {
+      "file": "ctm_fbi_varianth.cnm",
+      "vertices": 11261,
+      "triangles": 21710,
+      "bones": 94,
+      "sha256": "be910a4971273c5dfa57141494311a8dd31036443ce2321e3323e0693e36884e"
+    },
+    "agents/models/ctm_gendarmerie/ctm_gendarmerie_varianta.vmdl": {
+      "file": "ctm_gendarmerie_varianta.cnm",
+      "vertices": 13621,
+      "triangles": 25478,
+      "bones": 87,
+      "sha256": "6c8355ceb9eb5841e12106f8cde28b4595e9428c3a7ef03bbbe27612af4ab502"
+    },
+    "agents/models/ctm_gendarmerie/ctm_gendarmerie_variantb.vmdl": {
+      "file": "ctm_gendarmerie_variantb.cnm",
+      "vertices": 11717,
+      "triangles": 22101,
+      "bones": 87,
+      "sha256": "b3418d4003c896b2b6b0d244a2898c2fb2f1164fa5b94d58a8fe2eccea9ea670"
+    },
+    "agents/models/ctm_gendarmerie/ctm_gendarmerie_variantc.vmdl": {
+      "file": "ctm_gendarmerie_variantc.cnm",
+      "vertices": 11287,
+      "triangles": 21630,
+      "bones": 87,
+      "sha256": "9c58e426ad11e5d35dafc4651a52eeb3f4c3ec285a32212b6e2ff249c2bf2919"
+    },
+    "agents/models/ctm_gendarmerie/ctm_gendarmerie_variantd.vmdl": {
+      "file": "ctm_gendarmerie_variantd.cnm",
+      "vertices": 14210,
+      "triangles": 26792,
+      "bones": 87,
+      "sha256": "9e787e53b2696273b2a2ec5ed1a340b2bf4ce6424d2343bd3e768687b7bc83e5"
+    },
+    "agents/models/ctm_gendarmerie/ctm_gendarmerie_variante.vmdl": {
+      "file": "ctm_gendarmerie_variante.cnm",
+      "vertices": 11999,
+      "triangles": 23047,
+      "bones": 87,
+      "sha256": "79b966be031fa03ef9f0b2d1872bd068c11a5e0cdd919e04a976cc8e0ec69e17"
+    },
+    "agents/models/ctm_sas/ctm_sas.vmdl": {
+      "file": "ctm_sas.cnm",
+      "vertices": 8674,
+      "triangles": 16470,
+      "bones": 94,
+      "sha256": "7e07aafe1879a4e95a43691d86133f6118b81d8c09126bf8a7329b1c16cc2c74"
+    },
+    "agents/models/ctm_sas/ctm_sas_variantf.vmdl": {
+      "file": "ctm_sas.cnm",
+      "vertices": 8674,
+      "triangles": 16470,
+      "bones": 94,
+      "sha256": "7e07aafe1879a4e95a43691d86133f6118b81d8c09126bf8a7329b1c16cc2c74"
+    },
+    "agents/models/ctm_sas/ctm_sas_variantg.vmdl": {
+      "file": "ctm_sas.cnm",
+      "vertices": 8674,
+      "triangles": 16470,
+      "bones": 94,
+      "sha256": "7e07aafe1879a4e95a43691d86133f6118b81d8c09126bf8a7329b1c16cc2c74"
+    },
+    "agents/models/ctm_st6/ctm_st6_variante.vmdl": {
+      "file": "ctm_st6_variante.cnm",
+      "vertices": 15093,
+      "triangles": 27893,
+      "bones": 91,
+      "sha256": "3428f2b50b4b52a3e7bcd37d1245c904e7a931d9956b3ea59aec4a8c61ae0efe"
+    },
+    "agents/models/ctm_st6/ctm_st6_variantg.vmdl": {
+      "file": "ctm_st6_variantg.cnm",
+      "vertices": 16043,
+      "triangles": 30100,
+      "bones": 91,
+      "sha256": "205f3ad76ae539701cefabfa011ac928e77b813165522ecc0b23e05bcf28687a"
+    },
+    "agents/models/ctm_st6/ctm_st6_varianti.vmdl": {
+      "file": "ctm_st6_varianti.cnm",
+      "vertices": 13437,
+      "triangles": 25277,
+      "bones": 91,
+      "sha256": "653a9e8e5ea22967bd6c0d06b65d7dad8d58525f0338ffe16373a073d6794e2e"
+    },
+    "agents/models/ctm_st6/ctm_st6_variantj.vmdl": {
+      "file": "ctm_st6_variantj.cnm",
+      "vertices": 16045,
+      "triangles": 30080,
+      "bones": 91,
+      "sha256": "50dfa27260c75ab3629ccca8c1d3602e952b3b923b081f37572cbc34a9594706"
+    },
+    "agents/models/ctm_st6/ctm_st6_variantk.vmdl": {
+      "file": "ctm_st6_variantk.cnm",
+      "vertices": 12432,
+      "triangles": 23394,
+      "bones": 91,
+      "sha256": "248e5d5e0ff34d35b2ea297ed82049d99020c07fae58cb5ac97112134076764b"
+    },
+    "agents/models/ctm_st6/ctm_st6_variantl.vmdl": {
+      "file": "ctm_st6_variantl.cnm",
+      "vertices": 14944,
+      "triangles": 28564,
+      "bones": 91,
+      "sha256": "7c15de423b1e0f5c2275280542a0cf60d04ce81e6a3d6a4017c665d8613cf75f"
+    },
+    "agents/models/ctm_st6/ctm_st6_variantm.vmdl": {
+      "file": "ctm_st6_variantm.cnm",
+      "vertices": 14941,
+      "triangles": 28564,
+      "bones": 91,
+      "sha256": "09e3a2da41f99b105d26f6de6a9740a0e760761b155551b54092894d49ccd260"
+    },
+    "agents/models/ctm_st6/ctm_st6_variantn.vmdl": {
+      "file": "ctm_st6_variantn.cnm",
+      "vertices": 10786,
+      "triangles": 21219,
+      "bones": 91,
+      "sha256": "6d928f2db8cc21a683dc651a55125f3a574f41f1d4aae62fd965fcdc919d48c0"
+    },
+    "agents/models/ctm_swat/ctm_swat_variante.vmdl": {
+      "file": "ctm_swat_variante.cnm",
+      "vertices": 13538,
+      "triangles": 25781,
+      "bones": 87,
+      "sha256": "3c5968990f804062feff53a5660e16853bf5acd761a418795dcd354c8ac2309d"
+    },
+    "agents/models/ctm_swat/ctm_swat_variantf.vmdl": {
+      "file": "ctm_swat_variantf.cnm",
+      "vertices": 12043,
+      "triangles": 22972,
+      "bones": 87,
+      "sha256": "e38ed5ab7128bc0559b79a4107e7de61805f1a46b33d0059d30f2839ee610789"
+    },
+    "agents/models/ctm_swat/ctm_swat_variantg.vmdl": {
+      "file": "ctm_swat_variantg.cnm",
+      "vertices": 11936,
+      "triangles": 22646,
+      "bones": 87,
+      "sha256": "faaa902d60919537ddbd1fc70850595976ba44ddd69611066acc7f116e0b8657"
+    },
+    "agents/models/ctm_swat/ctm_swat_varianth.vmdl": {
+      "file": "ctm_swat_varianth.cnm",
+      "vertices": 10762,
+      "triangles": 20062,
+      "bones": 87,
+      "sha256": "a7d51a3c59ea73cc14d236264d1c2cbd0e76039936a4cf53e02b72b9e1a924e0"
+    },
+    "agents/models/ctm_swat/ctm_swat_varianti.vmdl": {
+      "file": "ctm_swat_varianti.cnm",
+      "vertices": 12627,
+      "triangles": 23876,
+      "bones": 87,
+      "sha256": "83d4c7129f30c6e69eda2faf87b30ec63ea2cb394c711739fc72abbda00956ae"
+    },
+    "agents/models/ctm_swat/ctm_swat_variantj.vmdl": {
+      "file": "ctm_swat_variantj.cnm",
+      "vertices": 10762,
+      "triangles": 20062,
+      "bones": 87,
+      "sha256": "55249c5ca524ac58adf03689771b50d32f6f97dbe756f15b7e38b07c0e8e112b"
+    },
+    "agents/models/ctm_swat/ctm_swat_variantk.vmdl": {
+      "file": "ctm_swat_variantf.cnm",
+      "vertices": 12043,
+      "triangles": 22972,
+      "bones": 87,
+      "sha256": "e38ed5ab7128bc0559b79a4107e7de61805f1a46b33d0059d30f2839ee610789"
+    },
+    "agents/models/tm_balkan/tm_balkan_variantf.vmdl": {
+      "file": "tm_balkan_variantf.cnm",
+      "vertices": 15599,
+      "triangles": 29826,
+      "bones": 86,
+      "sha256": "cb44ff3e617ef098cda31b0afdc84e48f40e3adc983f085741832c4504999fcc"
+    },
+    "agents/models/tm_balkan/tm_balkan_variantg.vmdl": {
+      "file": "tm_balkan_variantg.cnm",
+      "vertices": 12732,
+      "triangles": 26556,
+      "bones": 86,
+      "sha256": "1499b417a5511c05a31406b08aa7094014fd24282e6c90aa754aeacfd6a03a55"
+    },
+    "agents/models/tm_balkan/tm_balkan_varianth.vmdl": {
+      "file": "tm_balkan_varianth.cnm",
+      "vertices": 13205,
+      "triangles": 25377,
+      "bones": 86,
+      "sha256": "4a9c7e9aac42d9673c21d3bdd6a7490edf378859d8fd3a9c0223c3ff3eee6d6c"
+    },
+    "agents/models/tm_balkan/tm_balkan_varianti.vmdl": {
+      "file": "tm_balkan_varianti.cnm",
+      "vertices": 15377,
+      "triangles": 29442,
+      "bones": 86,
+      "sha256": "888ead3d0937e37077786cb5a5cb863ceae63b4998cb98bd01bd63f2536bd35b"
+    },
+    "agents/models/tm_balkan/tm_balkan_variantj.vmdl": {
+      "file": "tm_balkan_variantj.cnm",
+      "vertices": 15006,
+      "triangles": 28693,
+      "bones": 86,
+      "sha256": "4a5e809d4b4b211c52e343bd391a0031cc13529d1bbe76dd8f05f3163d9c538b"
+    },
+    "agents/models/tm_balkan/tm_balkan_variantk.vmdl": {
+      "file": "tm_balkan_variantg.cnm",
+      "vertices": 12732,
+      "triangles": 26556,
+      "bones": 86,
+      "sha256": "1499b417a5511c05a31406b08aa7094014fd24282e6c90aa754aeacfd6a03a55"
+    },
+    "agents/models/tm_balkan/tm_balkan_variantl.vmdl": {
+      "file": "tm_balkan_variantf.cnm",
+      "vertices": 15599,
+      "triangles": 29826,
+      "bones": 86,
+      "sha256": "cb44ff3e617ef098cda31b0afdc84e48f40e3adc983f085741832c4504999fcc"
+    },
+    "agents/models/tm_jungle_raider/tm_jungle_raider_varianta.vmdl": {
+      "file": "tm_jungle_raider_varianta.cnm",
+      "vertices": 14207,
+      "triangles": 25856,
+      "bones": 90,
+      "sha256": "063983d3a3e47b3e41bb36fb3952ee29adff81b498f326228e4aeee8f5ad0da5"
+    },
+    "agents/models/tm_jungle_raider/tm_jungle_raider_variantb.vmdl": {
+      "file": "tm_jungle_raider_variantb.cnm",
+      "vertices": 12533,
+      "triangles": 22763,
+      "bones": 86,
+      "sha256": "3e048c8855c96a28decf9968e9d4990d94d8cbe26594a264aeebea7c123fc8ab"
+    },
+    "agents/models/tm_jungle_raider/tm_jungle_raider_variantb2.vmdl": {
+      "file": "tm_jungle_raider_variantb2.cnm",
+      "vertices": 10938,
+      "triangles": 20068,
+      "bones": 86,
+      "sha256": "b379bdc146e8f1b95007335990c9c9fe0a969bee7026702f546c52747420b36b"
+    },
+    "agents/models/tm_jungle_raider/tm_jungle_raider_variantc.vmdl": {
+      "file": "tm_jungle_raider_variantc.cnm",
+      "vertices": 8503,
+      "triangles": 15504,
+      "bones": 86,
+      "sha256": "c5894a9598f8fdb3a7b00a56d471204f8e43efac81a2143a255994028e492939"
+    },
+    "agents/models/tm_jungle_raider/tm_jungle_raider_variantd.vmdl": {
+      "file": "tm_jungle_raider_variantd.cnm",
+      "vertices": 13915,
+      "triangles": 24943,
+      "bones": 86,
+      "sha256": "0f6b56471bfc3ad4aa330f02e6a5077ce00f4f2cc95ea7c4fef184777b6b354f"
+    },
+    "agents/models/tm_jungle_raider/tm_jungle_raider_variante.vmdl": {
+      "file": "tm_jungle_raider_variante.cnm",
+      "vertices": 11717,
+      "triangles": 20906,
+      "bones": 86,
+      "sha256": "2f9e0a99bd9c56ca5779beb67afe6124108efeec099c0dd1bd5278b844a6203e"
+    },
+    "agents/models/tm_jungle_raider/tm_jungle_raider_variantf.vmdl": {
+      "file": "tm_jungle_raider_variantf.cnm",
+      "vertices": 11089,
+      "triangles": 20797,
+      "bones": 86,
+      "sha256": "23a633317e526377db50c3f0d763c93b7cfc4d34b03f113c157098bb60cb8e03"
+    },
+    "agents/models/tm_jungle_raider/tm_jungle_raider_variantf2.vmdl": {
+      "file": "tm_jungle_raider_variantf2.cnm",
+      "vertices": 11089,
+      "triangles": 20797,
+      "bones": 86,
+      "sha256": "45f20f12e11897e8f4f8113600f02f75c3d21619db4dd2de620c9f055dac7e36"
+    },
+    "agents/models/tm_leet/tm_leet_varianta.vmdl": {
+      "file": "tm_leet_varianta.cnm",
+      "vertices": 10932,
+      "triangles": 20925,
+      "bones": 86,
+      "sha256": "b2c9312c581076839cc4d6b861c641640fcb1b69487563de7c8ac9d6579485db"
+    },
+    "agents/models/tm_leet/tm_leet_variantb.vmdl": {
+      "file": "tm_leet_variantb.cnm",
+      "vertices": 11038,
+      "triangles": 21204,
+      "bones": 86,
+      "sha256": "9dda5b6f18131ed4e39d476a13f36e1acb11f226174f30aeeb532c829801b76d"
+    },
+    "agents/models/tm_leet/tm_leet_variantc.vmdl": {
+      "file": "tm_leet_variantc.cnm",
+      "vertices": 11511,
+      "triangles": 22144,
+      "bones": 86,
+      "sha256": "6d9b7d1d3395b1d625d405dad16967f6c741c52e4ce235617d9bd395826d137e"
+    },
+    "agents/models/tm_leet/tm_leet_variantd.vmdl": {
+      "file": "tm_leet_variantd.cnm",
+      "vertices": 11183,
+      "triangles": 21316,
+      "bones": 86,
+      "sha256": "7077e614b5208a4741aa511c1ea8733ac08b2701194189508289dfb362bc5adf"
+    },
+    "agents/models/tm_leet/tm_leet_variante.vmdl": {
+      "file": "tm_leet_variante.cnm",
+      "vertices": 12305,
+      "triangles": 23560,
+      "bones": 86,
+      "sha256": "93170f22413314a87344a91d6657761c7cee443d3c3e2b83198c400e64d1c7a0"
+    },
+    "agents/models/tm_leet/tm_leet_variantf.vmdl": {
+      "file": "tm_leet_variantf.cnm",
+      "vertices": 11477,
+      "triangles": 22090,
+      "bones": 86,
+      "sha256": "08ae7d1c817b1db803695e2b1ea3f07800a8d1fc2bdcff2d33885759861018d3"
+    },
+    "agents/models/tm_leet/tm_leet_variantg.vmdl": {
+      "file": "tm_leet_variantg.cnm",
+      "vertices": 11183,
+      "triangles": 21316,
+      "bones": 86,
+      "sha256": "cae236e3bf91269030dfd2e1aea5e3561150c07e935f0862a0776572e7fb1007"
+    },
+    "agents/models/tm_leet/tm_leet_varianth.vmdl": {
+      "file": "tm_leet_varianth.cnm",
+      "vertices": 10932,
+      "triangles": 20925,
+      "bones": 86,
+      "sha256": "e62a49eccce0148e0a89ccfc7a30a92b5fe421bb883ddd07b67879aa3a2928b2"
+    },
+    "agents/models/tm_leet/tm_leet_varianti.vmdl": {
+      "file": "tm_leet_varianti.cnm",
+      "vertices": 11511,
+      "triangles": 22144,
+      "bones": 86,
+      "sha256": "de1d5288f0328d1930f1c0e39efc72d0a10ff2c5464bd66255bdd25381ced012"
+    },
+    "agents/models/tm_leet/tm_leet_variantj.vmdl": {
+      "file": "tm_leet_variantj.cnm",
+      "vertices": 11038,
+      "triangles": 21204,
+      "bones": 86,
+      "sha256": "88f2f88f8e50cce1ef2f3095bedc602d4be93541110b8d45fa4e4ecffefd3e35"
+    },
+    "agents/models/tm_leet/tm_leet_variantk.vmdl": {
+      "file": "tm_leet_variantk.cnm",
+      "vertices": 11599,
+      "triangles": 22357,
+      "bones": 86,
+      "sha256": "6c96833ec0b4b075eab571eecd8f423dba4e5f394460a81582550295457e5a99"
+    },
+    "agents/models/tm_phoenix/tm_phoenix.vmdl": {
+      "file": "tm_phoenix.cnm",
+      "vertices": 9195,
+      "triangles": 17715,
+      "bones": 86,
+      "sha256": "f20636abbc0e3e270a7821252f51b9074a04a3d5ebfa36e251649065c006ba80"
+    },
+    "agents/models/tm_phoenix/tm_phoenix_varianta.vmdl": {
+      "file": "tm_phoenix.cnm",
+      "vertices": 9195,
+      "triangles": 17715,
+      "bones": 86,
+      "sha256": "f20636abbc0e3e270a7821252f51b9074a04a3d5ebfa36e251649065c006ba80"
+    },
+    "agents/models/tm_phoenix/tm_phoenix_variantb.vmdl": {
+      "file": "tm_phoenix.cnm",
+      "vertices": 9195,
+      "triangles": 17715,
+      "bones": 86,
+      "sha256": "f20636abbc0e3e270a7821252f51b9074a04a3d5ebfa36e251649065c006ba80"
+    },
+    "agents/models/tm_phoenix/tm_phoenix_variantc.vmdl": {
+      "file": "tm_phoenix.cnm",
+      "vertices": 9195,
+      "triangles": 17715,
+      "bones": 86,
+      "sha256": "f20636abbc0e3e270a7821252f51b9074a04a3d5ebfa36e251649065c006ba80"
+    },
+    "agents/models/tm_phoenix/tm_phoenix_variantd.vmdl": {
+      "file": "tm_phoenix.cnm",
+      "vertices": 9195,
+      "triangles": 17715,
+      "bones": 86,
+      "sha256": "f20636abbc0e3e270a7821252f51b9074a04a3d5ebfa36e251649065c006ba80"
+    },
+    "agents/models/tm_phoenix/tm_phoenix_variantf.vmdl": {
+      "file": "tm_phoenix.cnm",
+      "vertices": 9195,
+      "triangles": 17715,
+      "bones": 86,
+      "sha256": "f20636abbc0e3e270a7821252f51b9074a04a3d5ebfa36e251649065c006ba80"
+    },
+    "agents/models/tm_phoenix/tm_phoenix_variantg.vmdl": {
+      "file": "tm_phoenix.cnm",
+      "vertices": 9195,
+      "triangles": 17715,
+      "bones": 86,
+      "sha256": "f20636abbc0e3e270a7821252f51b9074a04a3d5ebfa36e251649065c006ba80"
+    },
+    "agents/models/tm_phoenix/tm_phoenix_varianth.vmdl": {
+      "file": "tm_phoenix.cnm",
+      "vertices": 9195,
+      "triangles": 17715,
+      "bones": 86,
+      "sha256": "f20636abbc0e3e270a7821252f51b9074a04a3d5ebfa36e251649065c006ba80"
+    },
+    "agents/models/tm_phoenix/tm_phoenix_varianti.vmdl": {
+      "file": "tm_phoenix_varianti.cnm",
+      "vertices": 9505,
+      "triangles": 17963,
+      "bones": 86,
+      "sha256": "56226978581fe8aa4733f5fdbd0b38969db0b1e5635a2d7694f1c74b175acc81"
+    },
+    "agents/models/tm_professional/tm_professional_varf.vmdl": {
+      "file": "tm_professional_varf.cnm",
+      "vertices": 16718,
+      "triangles": 30856,
+      "bones": 90,
+      "sha256": "80df048bf49ce2a615da660391828099cdcb4386c06aaac4a4a938c8fb7311e1"
+    },
+    "agents/models/tm_professional/tm_professional_varf1.vmdl": {
+      "file": "tm_professional_varf1.cnm",
+      "vertices": 15775,
+      "triangles": 29295,
+      "bones": 90,
+      "sha256": "228bef480c3c0442dd6f9c5fa9d0970cbfa4343678c09948919075c1a1c25f50"
+    },
+    "agents/models/tm_professional/tm_professional_varf2.vmdl": {
+      "file": "tm_professional_varf2.cnm",
+      "vertices": 15888,
+      "triangles": 29525,
+      "bones": 90,
+      "sha256": "3d00ee2906c40e80cd0a90387ae99b96737afe6e78cb5213fdc9e5c891a8c0d9"
+    },
+    "agents/models/tm_professional/tm_professional_varf3.vmdl": {
+      "file": "tm_professional_varf3.cnm",
+      "vertices": 15863,
+      "triangles": 29423,
+      "bones": 90,
+      "sha256": "5579809ed04cbdea0bc172f25a4053af39b958059430a46e435a0a4fd28c3f75"
+    },
+    "agents/models/tm_professional/tm_professional_varf4.vmdl": {
+      "file": "tm_professional_varf4.cnm",
+      "vertices": 15863,
+      "triangles": 31145,
+      "bones": 90,
+      "sha256": "6a9c23590f5b32a65416a22bf0000cf5ac3d7fc0cb0bdb7757c5984e1c233217"
+    },
+    "agents/models/tm_professional/tm_professional_varf5.vmdl": {
+      "file": "tm_professional_varf5.cnm",
+      "vertices": 15863,
+      "triangles": 29423,
+      "bones": 90,
+      "sha256": "5642c8eef3b37b05c89df47fb38f528866491292e18faa700e17f03f77ee5ede"
+    },
+    "agents/models/tm_professional/tm_professional_varg.vmdl": {
+      "file": "tm_professional_varg.cnm",
+      "vertices": 11036,
+      "triangles": 20929,
+      "bones": 86,
+      "sha256": "4691d3da17d5f3648ded1e4802e51b273aeeb63139506b22370bf706b0bfc67e"
+    },
+    "agents/models/tm_professional/tm_professional_varh.vmdl": {
+      "file": "tm_professional_varh.cnm",
+      "vertices": 12632,
+      "triangles": 24303,
+      "bones": 86,
+      "sha256": "b410cee4cae71ca63cd4e13454ed6977c4dd4a331dbfb5422247bc7170dec605"
+    },
+    "agents/models/tm_professional/tm_professional_vari.vmdl": {
+      "file": "tm_professional_vari.cnm",
+      "vertices": 9823,
+      "triangles": 18783,
+      "bones": 86,
+      "sha256": "3f530a53db71a9ae98ec39df75e82559375f6542257d9fbd0bb48ac476e65903"
+    },
+    "agents/models/tm_professional/tm_professional_varj.vmdl": {
+      "file": "tm_professional_varj.cnm",
+      "vertices": 11988,
+      "triangles": 22445,
+      "bones": 89,
+      "sha256": "7b482ffede7f89602d82751e1f938ab237ad0cd0e2aab8f7893e8120804ff7bc"
+    }
+  }
+}

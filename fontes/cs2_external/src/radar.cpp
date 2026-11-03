@@ -103,9 +103,11 @@ void RadarRenderer::draw(ImDrawList* dl,const EntityCache& cache,const Config& c
     auto& p=*impl_;
     const std::string title=cache.map_name().empty() ? "RADAR / aguardando mapa" : cache.map_name()+
         (p.loaded && p.map.floors[p.floor].name!="default" ? " / inferior" : " / principal");
-    dl->AddText({x,y-22},IM_COL32(235,240,245,255),title.c_str());
+    dl->PushClipRect({x,y-25},{x+size,y+size+40},true);
+    dl->AddText(nullptr,13.f,{x,y-22},IM_COL32(235,240,245,255),title.c_str());
     if (!ready) {
-        dl->AddText({x+8,y+12},IM_COL32(235,190,110,255),"Fundo do mapa indisponivel");
+        dl->AddText(nullptr,12.f,{x+5,y+12},IM_COL32(235,190,110,255),"Mapa indisponivel");
+        dl->PopClipRect();
         return;
     }
     const float zoom=std::clamp(cfg.radar_zoom,1.f,4.f);
@@ -146,7 +148,7 @@ void RadarRenderer::draw(ImDrawList* dl,const EntityCache& cache,const Config& c
         if (!inside(pos)) { ++offscreen; continue; }
         const bool self=&player==anchor;
         const bool ally=local && player.team==local->team;
-        const auto color=self ? IM_COL32(255,255,255,255) : ally ? IM_COL32(70,175,255,255) : IM_COL32(255,80,75,255);
+        const auto color=self ? IM_COL32(255,255,255,255) : ally ? IM_COL32(70,175,255,255) : IM_COL32(255,0,96,255);
         const float angle=player.eye_angles.y*3.14159265f/180.f;
         const ImVec2 direction{std::cos(angle),-std::sin(angle)};
         dl->AddCircleFilled(pos,6.f,IM_COL32(5,10,15,230));
@@ -171,7 +173,8 @@ void RadarRenderer::draw(ImDrawList* dl,const EntityCache& cache,const Config& c
         if (inside(pos)) { dl->AddCircle(pos,6,IM_COL32(255,215,70,255),16,2.f); dl->AddText(nullptr,12.f,{pos.x+8,pos.y},IM_COL32(255,215,70,255),"C4"); }
     }
     dl->PopClipRect();
-    dl->AddText(nullptr,12.f,{x,y+size+5},IM_COL32(220,230,240,255),"VOCE: seta | ALIADO: azul | INIMIGO: vermelho");
-    const std::string footer="Norte acima | ^ cima / v baixo | Fora: "+std::to_string(offscreen);
+    dl->AddText(nullptr,11.f,{x,y+size+5},IM_COL32(220,230,240,255),size<280 ? "Azul: aliado | Rosa: inimigo" : "VOCE: seta | ALIADO: azul | INIMIGO: rosa");
+    const std::string footer=(size<280 ? "Norte acima | Fora: " : "Norte acima | ^ cima / v baixo | Fora: ")+std::to_string(offscreen);
     dl->AddText(nullptr,12.f,{x,y+size+21},IM_COL32(160,180,195,255),footer.c_str());
+    dl->PopClipRect();
 }

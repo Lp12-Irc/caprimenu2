@@ -2,6 +2,10 @@
 #include "aimbot.hpp"
 #include "misc.hpp"
 #include "esp.hpp"
+#include "fov_geometry.hpp"
+#include "head_gate.hpp"
+#include <limits>
+#include "game_viewport.hpp"
 #include <cstdio>
 #include <cstring>
 #include <stdexcept>
@@ -68,8 +72,66 @@ int main(int argc,char** argv) {
         check(cache.players()[1].pawn==addr(enemy_pawn) && cache.players()[1].health==87,"cross-chunk handle");
         check(cache.players()[1].bones_valid && cache.players()[1].head.z==364,"32-byte transform positions");
         check(cache.players()[2].obs_target==addr(local_pawn),"dead observer target resolution");
+        // The viewed pawn must remain available with the spectator list disabled.
+        put(local_ctrl,offsets::m_bPawnIsAlive,false);
+        put(local_ctrl,offsets::m_hObserverPawn,uint32_t{71});
+        put(observer_services,offsets::m_hObserverTarget,uint32_t{0x460000|600});
+        CacheOptions no_spectator_list;no_spectator_list.observers=false;cache.update(no_spectator_list);
+        uintptr_t viewed=0;
+        check(cache.local()->obs_target==addr(enemy_pawn) && cache.current_observer_target(viewed) && viewed==addr(enemy_pawn),
+              "camera subject remains known when spectator list is disabled");
+        const auto spectator_snapshot=cache.snapshot();
+        put(observer_services,offsets::m_hObserverTarget,uint32_t{70});
+        check(spectator_snapshot.current_observer_target(viewed) && viewed==addr(local_pawn),
+              "spectator switch is read live without waiting for an old entity snapshot");
+        put(local_ctrl,offsets::m_bPawnIsAlive,true);
+        put(local_ctrl,offsets::m_hObserverPawn,uint32_t{0});cache.update();
+        check(cache.current_observer_target(viewed) && viewed==0,"respawn clears the watched-player exclusion");
+
         check(cache.local()->weapon_id==7 && cache.local()->clip==30 && cache.local()->reserve==90,"active weapon service and nested item");
         check(cache.entity_handle(UINT32_MAX)==0 && cache.entity_handle(0)==0,"invalid handles");
+        CacheOptions lean;lean.items=lean.inventory=lean.recoil=lean.bomb=lean.observers=false;
+        lean.weapons=lean.names=lean.angles=lean.crosshair=false;
+        cache.update(lean);
+        check(cache.local()->valid() && cache.players()[1].bones_valid && cache.local()->weapon_id==0 &&
+            cache.local()->crosshair_target==0,"lean cache preserves health and bones without unused details");
+        cache.update();
+        // A current pose must see movement after publication, and reject a reused or dead pawn.
+        const auto published=cache.snapshot();
+        const auto previous_head=published.players()[1].head;
+        enemy_bones[bones::HEAD].position.x+=5;
+        PlayerEnt refreshed;
+        check(published.refresh_pose(published.players()[1],refreshed) && refreshed.head.x==previous_head.x+5,"fresh pose sees movement after snapshot publication");
+        check(published.players()[1].head.x==previous_head.x,"fresh pose does not mutate the published snapshot");
+        put(enemy_pawn,offsets::m_iHealth,0);
+        check(!published.refresh_pose(published.players()[1],refreshed),"fresh pose rejects death after publication");
+        put(enemy_pawn,offsets::m_iHealth,87);
+        put(enemy_ctrl,offsets::m_hPlayerPawn,uint32_t{0});
+        check(!published.refresh_pose(published.players()[1],refreshed),"fresh pose rejects changed pawn handles");
+        put(enemy_ctrl,offsets::m_hPlayerPawn,uint32_t{0x460000|600});
+        enemy_bones[bones::HEAD].position.x-=5;
+        put(enemy_scene,offsets::m_modelState+offsets::m_pBoneArray,uintptr_t{0});
+        check(!published.refresh_pose(published.players()[1],refreshed),"aim still rejects an incomplete pose");
+        check(published.visual_pose(published.players()[1],refreshed,12) && refreshed.head.z==previous_head.z,"ESP bridges one incomplete pose using a validated recent sample");
+        check(published.visual_pose(published.players()[1],refreshed,40),"ESP bridges a low-FPS frame without another bone read");
+        check(!published.visual_pose(published.players()[1],refreshed,121),"ESP cannot retain an expired pose beyond 120 ms");
+        put(enemy_pawn,offsets::m_iHealth,0);
+        check(!published.visual_pose(published.players()[1],refreshed,12),"ESP bridge cannot retain a dead player");
+        put(enemy_pawn,offsets::m_iHealth,87);
+        put(enemy_ctrl,offsets::m_hPlayerPawn,uint32_t{0});
+        check(!published.visual_pose(published.players()[1],refreshed,12),"ESP bridge cannot retain a replaced player");
+        put(enemy_ctrl,offsets::m_hPlayerPawn,uint32_t{0x460000|600});
+        put(enemy_scene,offsets::m_vecAbsOrigin,Vec3{900,200,300});
+        check(!published.visual_pose(published.players()[1],refreshed,12),"ESP bridge rejects large position discontinuities");
+        put(enemy_scene,offsets::m_vecAbsOrigin,Vec3{100,200,300});
+        put(enemy_scene,offsets::m_modelState+offsets::m_pBoneArray,addr(enemy_bones));
+        put(enemy_scene,offsets::m_vecAbsOrigin,Vec3{124,200,300});
+        memory.profile_reads(true);memory.reset_read_stats();
+        check(published.visual_pose(published.players()[1],refreshed,60) && refreshed.head.x==previous_head.x+24,"Visual bridge follows measured origin movement without extrapolation");
+        check(memory.read_stats().calls<=4,"Visual bridge repeats expensive bone-array reads");
+        memory.profile_reads(false);
+        check(published.players()[1].head.x==previous_head.x,"Visual bridge mutates the shared snapshot");
+        put(enemy_scene,offsets::m_vecAbsOrigin,Vec3{100,200,300});
         // Names, rather than constant indices, must identify the body in a differently ordered asset.
         const std::vector<std::string> canonical={"root_motion","pelvis","spine_0","spine_1","spine_2","spine_3","neck_0","head_0",
             "clavicle_L","arm_upper_L","arm_lower_L","hand_L","clavicle_R","arm_upper_R","arm_lower_R","hand_R",
@@ -86,10 +148,14 @@ int main(int argc,char** argv) {
             put(name_ptrs,(i+32)*8,reinterpret_cast<uintptr_t>(name_text[i+32].data()));
         }
         put(model,offsets::MODEL_BONE_NAME_COUNT,64); put(model,offsets::MODEL_BONE_NAME_DATA,addr(name_ptrs));
+        const char model_name[]="agents/models/ctm_sas/ctm_sas.vmdl";
+        put(local_scene,offsets::m_modelState+offsets::m_ModelName,reinterpret_cast<uintptr_t>(model_name));
         put(binding,0,addr(model)); put(local_scene,offsets::m_modelState+offsets::m_hModel,addr(binding));
         remapped_bones[7+32].position={10,20,94};
         remapped_bones[7+32].scale=1;
         put(local_scene,offsets::m_modelState+offsets::m_pBoneArray,addr(remapped_bones)); cache.update();
+        check(cache.local()->model_info && cache.local()->model_info->name==model_name &&
+              cache.local()->model_info->bones.size()==64,"live model identity and complete bone names");
         check(cache.local()->rig.named && cache.local()->rig.target(0)==39 && cache.local()->head.z==94,"live bone array follows model-specific names");
         put(local_scene,offsets::m_modelState+offsets::m_hModel,uintptr_t{0});
         put(local_scene,offsets::m_modelState+offsets::m_pBoneArray,addr(local_bones)); cache.update();
@@ -97,12 +163,50 @@ int main(int argc,char** argv) {
         const InputApi input{record_input,key_state,test_clock};
         enemy_bones[bones::HEAD].position={110,30,94};
         put(enemy_scene,offsets::m_vecAbsOrigin,Vec3{110,30,30}); cache.update();
-        Config cfg; cfg.aim=true; cfg.aim_ads_only=false; cfg.aim_fov=15; cfg.aim_smooth=1; cfg.aim_delay_ms=100;
-        Aimbot aim(input); aim.update(cache,cfg,&memory);
+        Config cfg; cfg.aim_visibility=false;cfg.aim_target=0;cfg.aim=true; cfg.aim_ads_only=false; cfg.aim_fov=15; cfg.aim_smooth=1; cfg.aim_delay_ms=100;
+        Aimbot aim(input);
+        held=false;memory.reset_read_stats();aim.update(cache,cfg,&memory);
+        check(memory.read_stats().calls==0,"unpressed aim key performs no remote identity reads");held=true;
+        aim.update(cache,cfg,&memory);
         check(sent.empty(),"aim waits without sleeping");
         clock_ms=1099; aim.update(cache,cfg,&memory); check(sent.empty(),"aim acquisition delay respected");
         clock_ms=1100; aim.update(cache,cfg,&memory);
         check(sent.size()==1 && sent.back().mi.dx<0 && sent.back().mi.dwFlags==MOUSEEVENTF_MOVE,"Source yaw maps to negative mouse X");
+        sent.clear();aim.reset();clock_ms=1200;aim.update(cache,cfg,&memory);
+        enemy_bones[bones::HEAD].scale=0;cache.update();clock_ms=1240;aim.update(cache,cfg,&memory);
+        check(sent.empty(),"missing pose never receives a correction");
+        enemy_bones[bones::HEAD].scale=1;cache.update();clock_ms=1300;aim.update(cache,cfg,&memory);
+        check(sent.size()==1,"one missing pose does not restart target acquisition delay");
+        sent.clear();aim.reset();clock_ms=1400;aim.update(cache,cfg,&memory);aim.suspend();
+        clock_ms=1500;aim.update(cache,cfg,&memory);
+        check(sent.size()==1,"brief sampling pause preserves acquisition without moving on stale data");
+        cfg.aim_delay_ms=0;cfg.aim_sens=5;cfg.aim_auto_sens=true;
+        sent.clear();aim.reset();clock_ms=1600;aim.update(cache,cfg,&memory);check(!sent.empty(),"automatic sensitivity accepts current game scale");
+        const auto automatic=sent.back().mi.dx;cfg.aim_auto_sens=false;
+        sent.clear();aim.reset();clock_ms=1700;aim.update(cache,cfg,&memory);
+        check(!sent.empty() && std::abs(automatic)>std::abs(sent.back().mi.dx)*4,"automatic sensitivity avoids a second manual sensitivity multiplier");
+        cfg.aim_auto_sens=true;cfg.aim_sens=1;
+        // Menus must keep their own pointer and input. Failed cursor queries fail closed.
+        check(gameplay_cursor_captured(0,true),"hidden cursor permits gameplay input");
+        check(!gameplay_cursor_captured(CURSOR_SHOWING,true) && !gameplay_cursor_captured(CURSOR_SUPPRESSED,true) &&
+            !gameplay_cursor_captured(0,false),"free or unknown cursor blocks gameplay automation");
+        // A snapshot can outlive a team switch or controller replacement between two cache polls.
+        put(enemy_ctrl,offsets::m_iTeamNum,uint8_t{2});put(enemy_pawn,offsets::m_iTeamNum,uint8_t{2});
+        sent.clear();aim.reset();aim.update(cache,cfg,&memory);
+        check(sent.empty(),"a cached enemy that joined our team receives no aim command");
+        put(enemy_ctrl,offsets::m_iTeamNum,uint8_t{3});put(enemy_pawn,offsets::m_iTeamNum,uint8_t{3});
+        put(local_ctrl,offsets::m_iTeamNum,uint8_t{3});put(local_pawn,offsets::m_iTeamNum,uint8_t{3});
+        sent.clear();aim.reset();aim.update(cache,cfg,&memory);
+        check(sent.empty(),"a local team switch invalidates the old target snapshot");
+        put(local_ctrl,offsets::m_iTeamNum,uint8_t{2});put(local_pawn,offsets::m_iTeamNum,uint8_t{2});
+        local_ptr=addr(observer_ctrl);sent.clear();aim.reset();aim.update(cache,cfg,&memory);
+        check(sent.empty(),"controller replacement invalidates gameplay input");local_ptr=addr(local_ctrl);
+        enemy_bones[bones::HEAD].position.z=40;cache.update();
+        sent.clear();aim.reset();aim.update(cache,cfg,&memory);
+        check(sent.empty(),"a head entry at ankle height cannot move the mouse");
+        enemy_bones[bones::HEAD].position.z=94;cache.update();
+        sent.clear();aim.reset();aim.update(cache,cfg,&memory);
+        check(!sent.empty(),"validated enemy head recovers after invalid pose");
         sent.clear(); aim.reset(); cfg.aim_target=1; cfg.aim_fov=1; cfg.aim_delay_ms=0;
         aim.update(cache,cfg,&memory); check(sent.empty(),"distance targeting still enforces FOV");
         cfg.aim=false; cfg.rcs=true;
@@ -116,7 +220,7 @@ int main(int argc,char** argv) {
         check(sent.empty(),"unchanged recoil is not repeatedly accumulated");
         Matrix4x4 vm{}; vm.m[0][0]=.001f; vm.m[0][3]=-.11f; vm.m[1][1]=.001f; vm.m[1][3]=-.03f; vm.m[3][3]=1;
         cache.vm_addr=reinterpret_cast<uintptr_t>(&vm); cache.update();
-        Misc misc(input); cfg.rcs=false; cfg.triggerbot=true; cfg.tb_delay_ms=75; cfg.tb_release_ms=20;
+        Misc misc(input); cfg.tb_interval_ms=20; cfg.tb_head_only=false; cfg.rcs=false; cfg.triggerbot=true; cfg.tb_delay_ms=75; cfg.tb_release_ms=20;
         clock_ms=1900; misc.update(cache,cfg,&memory,800,600); check(sent.empty(),"screen overlap alone cannot trigger a shot");
         put(local_pawn,offsets::m_iIDEntIndex,600); cache.update();
         clock_ms=2000; misc.update(cache,cfg,&memory,800,600); check(sent.empty(),"trigger acquisition delay");
@@ -145,6 +249,76 @@ int main(int argc,char** argv) {
         check(misc.trigger_state()==Misc::TriggerState::InputRejected,"rejected mouse input is observable");
         accept_input=true; clock_ms=2203; misc.update(cache,cfg,&memory,800,600);
         check(misc.trigger_state()==Misc::TriggerState::Pressed,"trigger recovers after rejected input"); misc.reset();
+        // Revalidate the real crosshair value instead of firing from a cached target.
+        sent.clear();put(local_pawn,offsets::m_iIDEntIndex,uint32_t{0xffffffff});clock_ms=2300;
+        misc.update(cache,cfg,&memory,800,600);check(sent.empty(),"stale cached crosshair cannot fire after aim leaves target");
+        put(local_pawn,offsets::m_iIDEntIndex,uint32_t{0x470000|600});
+        misc.update(cache,cfg,&memory,800,600);check(sent.empty(),"crosshair handle with mismatched serial cannot fire");
+        put(local_pawn,offsets::m_iIDEntIndex,uint32_t{0x460000|600});
+        misc.update(cache,cfg,&memory,800,600);check(sent.size()==1,"full matching crosshair handle resolves enemy");misc.reset();
+        put(local_pawn,offsets::m_iIDEntIndex,600);sent.clear();cfg.tb_delay_ms=75;
+        Misc continuity(input);clock_ms=3000;continuity.update(cache,cfg,&memory,800,600);
+        clock_ms=3040;continuity.suspend(cfg);check(sent.empty(),"short cache gap cannot emit a press");
+        clock_ms=3075;continuity.update(cache,cfg,&memory,800,600);check(sent.size()==1,"brief cache gap does not restart acquisition delay");
+        clock_ms=3095;continuity.update(cache,cfg,&memory,800,600);check(sent.size()==2 && sent.back().mi.dwFlags==MOUSEEVENTF_LEFTUP,"release occurs without another press in the same tick");
+        cfg.tb_delay_ms=0;clock_ms=3096;continuity.update(cache,cfg,&memory,800,600);check(sent.size()==2,"release interval is observable before next click");
+        clock_ms=3115;continuity.update(cache,cfg,&memory,800,600);check(sent.size()==3,"trigger resumes after release interval");continuity.reset();
+        {
+            Misc instant(input);Config immediate=cfg;immediate.tb_head_only=false;
+            immediate.tb_delay_ms=0;immediate.tb_interval_ms=0;immediate.tb_release_ms=16;
+            sent.clear();clock_ms=3200;instant.update(cache,immediate,&memory,800,600);
+            check(sent.size()==1 && sent.back().mi.dwFlags==MOUSEEVENTF_LEFTDOWN,"zero-delay trigger fires on the first eligible update");
+            clock_ms=3216;instant.update(cache,immediate,&memory,800,600);
+            check(sent.size()==2 && sent.back().mi.dwFlags==MOUSEEVENTF_LEFTUP,"fast click still emits a separate release");
+            clock_ms=3218;instant.update(cache,immediate,&memory,800,600);
+            check(sent.size()==3 && sent.back().mi.dwFlags==MOUSEEVENTF_LEFTDOWN,"zero interval repeats without requiring key reactivation");
+            instant.reset();sent.clear();
+        }
+        // Head-only checks use the live pose and camera; the input sink records all clicks.
+        {
+        const auto saved_camera=vm;
+        vm={};vm.m[0][1]=1;vm.m[0][3]=-30;vm.m[1][2]=1;vm.m[1][3]=-74;vm.m[3][0]=1;
+        cfg.tb_head_only=true;cfg.tb_delay_ms=75;cfg.tb_release_ms=30;
+        Misc head_trigger(input);sent.clear();clock_ms=4000;
+        head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.empty() && head_trigger.trigger_state()==Misc::TriggerState::WaitingHead,"body crosshair cannot fire in head-only mode");
+        vm.m[1][3]=-94;clock_ms=4010;head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.empty() && head_trigger.trigger_state()==Misc::TriggerState::Delay,"head alignment starts the acquisition delay");
+        vm.m[1][3]=-74;clock_ms=4084;head_trigger.update(cache,cfg,&memory,800,600);
+        vm.m[1][3]=-94;clock_ms=4085;head_trigger.update(cache,cfg,&memory,800,600);
+        clock_ms=4159;head_trigger.update(cache,cfg,&memory,800,600);check(sent.empty(),"leaving head region restarts the full delay");
+        clock_ms=4160;head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.size()==1 && sent.back().mi.dwFlags==MOUSEEVENTF_LEFTDOWN,"validated head alignment permits a click");
+        vm.m[1][3]=-74;clock_ms=4161;head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.size()==2 && sent.back().mi.dwFlags==MOUSEEVENTF_LEFTUP,"leaving head releases immediately before the click deadline");
+        head_trigger.reset();sent.clear();cfg.tb_delay_ms=0;vm.m[1][3]=-94;
+        put(enemy_scene,offsets::m_modelState+offsets::m_pBoneArray,uintptr_t{0});clock_ms=4200;
+        head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.empty() && head_trigger.trigger_state()==Misc::TriggerState::WaitingData,"missing live bones do not fall back to body firing");
+        put(enemy_scene,offsets::m_modelState+offsets::m_pBoneArray,addr(enemy_bones));
+        vm.m[0][0]=std::numeric_limits<float>::quiet_NaN();head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.empty() && head_trigger.trigger_state()==Misc::TriggerState::WaitingData,"invalid live camera blocks head-only firing");
+        vm.m[0][0]=0;enemy_bones[bones::HEAD].position.z=88;
+        head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.empty() && head_trigger.trigger_state()==Misc::TriggerState::WaitingHead,"head moved after snapshot cannot trigger from the stale cached pose");
+        enemy_bones[bones::HEAD].position.z=94;
+        vm.m[0][0]=0;vm.m[1][3]=-95.8f;
+        cfg.tb_head_margin=.3f;head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.empty(),"small head margin rejects an edge alignment");
+        cfg.tb_head_margin=.8f;head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.size()==1,"wider head margin accepts the same valid head alignment");
+        clock_ms=4201;head_trigger.suspend(cfg);
+        check(sent.size()==2 && sent.back().mi.dwFlags==MOUSEEVENTF_LEFTUP,"head-only cache gaps immediately release the injected click");
+        sent.clear();vm.m[1][3]=-94;cfg.tb_delay_ms=75;clock_ms=4202;head_trigger.update(cache,cfg,&memory,800,600);
+        check(sent.empty(),"cache gap restarts the head-only delay");head_trigger.reset();
+        // Projection scale (FOV/aspect) must not widen the world-space head region.
+        PlayerEnt live;check(cache.refresh_pose(cache.players()[1],live),"head gate live fixture");
+        const auto centered=head_gate::test(live,vm,.8f);
+        vm.m[0][1]*=2;vm.m[0][3]*=2;vm.m[1][2]*=3;vm.m[1][3]*=3;
+        check(centered==head_gate::Result::Inside && head_gate::test(live,vm,.8f)==centered,"head gate is invariant to FOV/aspect projection scales");
+        vm.m[3][0]=-1;check(head_gate::test(live,vm,.8f)==head_gate::Result::Outside,"heads behind the camera cannot fire");
+        cfg.tb_head_only=false;cfg.tb_head_margin=.8f;cfg.tb_delay_ms=0;vm=saved_camera;
+        }
         cache.vm_addr=0;
         held_key=VK_F6; cfg.aim=true; cfg.aim_key=VK_F6; cfg.aim_ads_only=false; cfg.aim_fov=15; cfg.aim_smooth=1; cfg.rcs=false;
         sent.clear(); aim.reset(); aim.update(cache,cfg,&memory); check(!sent.empty(),"aim needs only its configured key by default");
@@ -199,6 +373,31 @@ int main(int argc,char** argv) {
         check(sent.size()==1 && sent.back().mi.dx<0 && sent.back().mi.dy<0,"projected head left/up receives mouse left/up");
         for (int i=1;i<=20;++i) { clock_ms=6000+i*2; aim.update(cache,cfg,&memory); }
         check(sent.size()==1,"one unprocessed camera frame cannot queue repeated aim corrections");
+        const auto original_camera=camera;
+        for(int i=0;i<12;++i) {
+            camera.m[0][3]+=.2f;camera.m[1][3]-=.1f;camera.m[3][3]+=.01f;
+            clock_ms+=2;aim.update(cache,cfg,&memory);
+        }
+        check(sent.size()==1,"camera translation without rotational feedback cannot queue aim corrections");
+        camera=original_camera;
+        {
+            // A dropped mouse command after a pistol shot must not latch the aim off.
+            Aimbot recovery(input);simulated_view=nullptr;sent.clear();
+            const auto started=clock_ms;
+            recovery.update(cache,cfg,&memory);check(sent.size()==1,"recovery fixture sends first aim correction");
+            clock_ms=started+79;recovery.update(cache,cfg,&memory);
+            check(sent.size()==1,"bounded feedback wait does not spam an unprocessed frame");
+            put(local_pawn,offsets::m_iShotsFired,1);cache.update();
+            clock_ms=started+80;recovery.update(cache,cfg,&memory);
+            check(sent.size()==2,"aim recovers after a shot without releasing its held key");
+            recovery.suspend();clock_ms=started+82;recovery.update(cache,cfg,&memory);
+            check(sent.size()==2,"brief data gap does not bypass feedback throttling");
+            clock_ms=started+160;recovery.update(cache,cfg,&memory);
+            check(sent.size()==3,"repeated dropped feedback never latches the activation key");
+            held=false;clock_ms+=1;recovery.update(cache,cfg,&memory);
+            check(sent.size()==3,"releasing aim key stops recovery retries");
+            held=true;put(local_pawn,offsets::m_iShotsFired,3);cache.update();simulated_view=&camera_angles;
+        }
         Esp projection;
         update_camera();
         for (int i=0;i<12;++i) { clock_ms+=16; aim.update(cache,cfg,&memory); update_camera(); }
@@ -216,6 +415,35 @@ int main(int argc,char** argv) {
         }
         check(worst_tracking_error<1.f,"direct response follows a moving head within one pixel in simulated feedback");
         simulated_view=nullptr;
+        // Identical observed bones must yield identical corrections regardless of an
+        // uncalibrated velocity/latency estimate. No input is sent to the real game.
+        camera_angles={};update_camera();
+        put(enemy_pawn,offsets::m_vecAbsVelocity,Vec3{0,1000,0});cache.update();
+        sent.clear();aim.reset();clock_ms+=16;aim.update(cache,cfg,&memory);
+        check(!sent.empty(),"current bone remains trackable during movement");
+        const auto moving_command=sent.back().mi;
+        put(enemy_pawn,offsets::m_vecAbsVelocity,Vec3{});cache.update();
+        sent.clear();aim.reset();clock_ms+=16;aim.update(cache,cfg,&memory);
+        check(!sent.empty() && sent.back().mi.dx==moving_command.dx && sent.back().mi.dy==moving_command.dy,"velocity estimate cannot pull aim away from the current validated head");
+        // The diagonal of the drawn cone must agree with target selection.
+        camera_angles={};update_camera();cfg.aim_fov=15;clock_ms+=16;
+        const float diagonal=std::tan(15.f*fov_geometry::radians)*.70710678f*.999f;
+        enemy_bones[bones::HEAD].position={eye.x+100,eye.y+100*diagonal,eye.z+100*diagonal};
+        cache.update();sent.clear();aim.reset();aim.update(cache,cfg,&memory);
+        check(!sent.empty(),"head inside the FOV diagonal is eligible for targeting");
+        float rx=0,ry=0;Matrix4x4 scaled=camera;for(auto& row:scaled.m)for(auto& v:row)v*=3;
+        check(fov_geometry::radii(scaled,15,1600,900,rx,ry),"FOV radii support scaled projection matrices");
+        const auto edge=projection.w2s(enemy_bones[bones::HEAD].position,scaled,1600,900);
+        const float ellipse=std::hypot((edge.x-800)/rx,(edge.y-450)/ry);
+        check(ellipse<1 && ellipse>.99f,"projected selection point agrees with the displayed FOV boundary");
+        enemy_bones[bones::HEAD].position={eye.x+100,eye.y+100*diagonal*1.01f,eye.z+100*diagonal*1.01f};
+        cache.update();sent.clear();aim.reset();clock_ms+=16;aim.update(cache,cfg,&memory);
+        check(sent.empty(),"head outside the FOV cone does not receive input");
+        enemy_bones[bones::HEAD].position={110,30,104};cache.update();auto incomplete=cache.snapshot();
+        put(enemy_scene,offsets::m_modelState+offsets::m_pBoneArray,uintptr_t{0});cache.update();incomplete=cache.snapshot();
+        put(enemy_scene,offsets::m_modelState+offsets::m_pBoneArray,addr(enemy_bones));
+        sent.clear();aim.reset();clock_ms+=16;aim.update(incomplete,cfg,&memory);
+        check(!sent.empty(),"a missing cached pose can be reacquired from current validated bones");
         // Keep the selected living enemy while the activation key remains held.
         enemy_bones[bones::HEAD].position={110,30,94}; cache.vm_addr=0; cache.update();
         cache.vm_addr=reinterpret_cast<uintptr_t>(&camera); camera_angles={}; update_camera();
@@ -229,6 +457,16 @@ int main(int argc,char** argv) {
         put(third_scene,offsets::m_modelState+offsets::m_pBoneArray,addr(third_bones));
         camera_angles={0,1,0}; update_camera(); cache.update(); clock_ms+=16; sent.clear(); aim.update(cache,cfg,&memory);
         check(!sent.empty() && sent.back().mi.dx<0,"aim does not jump to a different closer-to-center enemy mid-hold");
+        cfg.aim_target=1;
+        put(enemy_scene,offsets::m_vecAbsOrigin,Vec3{510,30,30});enemy_bones[bones::HEAD].position={510,30,94};
+        camera_angles.y=1.01f;update_camera();
+        cache.update();clock_ms+=16;sent.clear();aim.update(cache,cfg,&memory);
+        check(!sent.empty() && sent.back().mi.dx>0,"distance priority releases a far lock for a substantially nearer enemy");
+        put(enemy_scene,offsets::m_vecAbsOrigin,Vec3{110,30,30});enemy_bones[bones::HEAD].position={110,30,94};cfg.aim_target=0;
+        put(enemy_scene,offsets::m_modelState+offsets::m_pBoneArray,uintptr_t{0});cache.update();
+        camera_angles.y=1.1f;update_camera();clock_ms+=16;sent.clear();aim.update(cache,cfg,&memory);
+        check(!sent.empty() && sent.back().mi.dx>0,"unavailable old pose cannot block another validated target inside FOV");
+        put(enemy_scene,offsets::m_modelState+offsets::m_pBoneArray,addr(enemy_bones));
         put(observer_ctrl,offsets::m_bPawnIsAlive,false); put(observer_ctrl,offsets::m_iTeamNum,uint8_t{2});
         put(observer_ctrl,offsets::m_hPlayerPawn,uint32_t{0}); put(observer_pawn,offsets::m_iHealth,0);
         cache.vm_addr=0; cache.view_angles_addr=0; cache.update(); held_key=0;
@@ -267,6 +505,34 @@ int main(int argc,char** argv) {
         check(cache.current_view_matrix(sampled) && sampled.m[0][3]==0,"fresh projection read");
         current.m[0][3]=.25f;
         check(cache.current_view_matrix(sampled) && sampled.m[0][3]==.25f,"camera movement is visible without another entity update");
+        Config display;display.display_aspect=3;display.display_fit=1;
+        auto image=game_viewport(display,1920,1080);
+        check(std::fabs(image.x-240)<.01f && image.y==0 && image.width==1440 && image.height==1080,"4:3 bars use the correct 1440x1080 image in a 1920x1080 window");
+        display.display_aspect=2;image=game_viewport(display,1920,1080);
+        check(std::fabs(image.x-96)<.01f && image.width==1728,"16:10 pillarbox area is centered");
+        display.display_aspect=1;image=game_viewport(display,1920,1200);
+        check(std::fabs(image.y-60)<.01f && image.height==1080,"16:9 letterbox area is centered");
+        display.display_aspect=3;image=game_viewport(display,1280,1024);
+        check(image.y==32 && image.height==960,"4:3 in a 5:4 window uses 32-pixel horizontal bars");
+        Matrix4x4 lens{};lens.m[0][1]=-.75f;lens.m[1][2]=1;lens.m[3][0]=1;
+        for(int aspect=0;aspect<4;++aspect)for(int fit=0;fit<2;++fit) {
+            display.display_aspect=aspect;display.display_fit=fit;
+            for(const auto dimensions:{std::pair{1920,1080},std::pair{1920,1200},std::pair{1280,960},std::pair{1280,1024}}) {
+                const auto view=game_viewport(display,dimensions.first,dimensions.second);
+                const auto mapped=viewport_projection(lens,view,dimensions.first,dimensions.second);
+                const auto center=projection.w2s({100,0,0},mapped,dimensions.first,dimensions.second);
+                check(center.vis && std::fabs(center.x-dimensions.first*.5f)<.01f && std::fabs(center.y-dimensions.second*.5f)<.01f,"Aspect configuration cannot displace the image center");
+                const auto left=projection.w2s({100,100/.75f,0},mapped,dimensions.first,dimensions.second);
+                check(std::fabs(left.x-view.x)<.02f,"World projection must reach the configured image edge");
+                float fov_x=0,fov_y=0;check(fov_geometry::radii(mapped,15,dimensions.first,dimensions.second,fov_x,fov_y),"FOV uses the viewport projection");
+                const float diagonal=std::tan(15.f*fov_geometry::radians)*.70710678f*.99f;
+                const auto point=projection.w2s({100,-100*diagonal,100*diagonal},mapped,dimensions.first,dimensions.second);
+                const float fraction=std::hypot((point.x-center.x)/fov_x,(point.y-center.y)/fov_y);
+                check(std::fabs(fraction-.99f)<.001f,"FOV membership and ESP mapping stay aligned across aspect ratios");
+                if(fit==0 || aspect==0)check(std::memcmp(&mapped,&lens,sizeof(lens))==0,"Stretched and automatic modes cannot apply a second aspect correction");
+            }
+        }
+        std::puts("PASS: 32 viewport combinations align image center, projected edge and FOV; stretched mode remains unchanged.");
         PlayerEnt hull; hull.origin={0,0,0}; hull.collision_valid=true; hull.collision_min={-16,-16,0}; hull.collision_max={16,16,72};
         Esp esp;
         const auto standing=esp.project_bounds(hull,sampled,1000,1000);
@@ -276,7 +542,32 @@ int main(int argc,char** argv) {
         check(crouched.valid && crouched.bottom-crouched.top<standing.bottom-standing.top,"crouch uses current hull height");
         current.m[3][3]=-1;
         check(!esp.project_bounds(hull,current,1000,1000).valid,"geometry behind camera cannot create an oversized box");
+        Matrix4x4 near_plane{};near_plane.m[0][1]=1;near_plane.m[1][2]=1;near_plane.m[3][0]=1;
+        hull.origin={10,0,0};
+        check(esp.project_bounds(hull,near_plane,1000,1000).valid,"partially visible close player is not discarded when some hull corners are behind the camera");
+        hull.origin={-100,0,0};
+        check(!esp.project_bounds(hull,near_plane,1000,1000).valid,"fully behind-camera hull remains culled");
         cache.vm_addr=0; check(!cache.current_view_matrix(sampled),"failed matrix read is explicit");
+        {
+            ImGui::CreateContext();ImGui::GetIO().IniFilename=nullptr;
+            ImGui::GetIO().DisplaySize={1920,1080};ImGui::GetIO().DeltaTime=1.f/60;
+            unsigned char* atlas_pixels;int atlas_width,atlas_height;
+            ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&atlas_pixels,&atlas_width,&atlas_height);
+            cache.vm_addr=reinterpret_cast<uintptr_t>(&lens);
+            Config hud;hud.aim=true;hud.aim_fov_circle=true;hud.aim_fov=15;hud.display_aspect=3;hud.display_fit=1;
+            Esp raster;ImGui::NewFrame();raster.render(cache,hud,ImGui::GetBackgroundDrawList(),1920,1080);ImGui::Render();
+            const auto* draw=ImGui::GetDrawData();check(draw->TotalVtxCount>0,"viewport integration renders a FOV outline");
+            float minimum=1920,maximum=0;bool clipped=false;
+            for(int i=0;i<draw->CmdListsCount;++i){
+                for(const auto& command:draw->CmdLists[i]->CmdBuffer)if(command.ElemCount){check(command.ClipRect.x>=239.9f && command.ClipRect.z<=1680.1f,"world overlay cannot draw inside side bars");clipped=true;}
+                for(const auto& vertex:draw->CmdLists[i]->VtxBuffer){minimum=(std::min)(minimum,vertex.pos.x);maximum=(std::max)(maximum,vertex.pos.x);}
+            }
+            float expected_x=0,expected_y=0;
+            const auto view=game_viewport(hud,1920,1080);const auto mapped=viewport_projection(lens,view,1920,1080);
+            check(fov_geometry::radii(mapped,15,1920,1080,expected_x,expected_y) && std::fabs((maximum-minimum)*.5f-expected_x)<2,"rendered FOV uses the configured game image size");
+            check(clipped,"viewport produces a clipped drawing command");
+            ImGui::DestroyContext();
+        }
         if (argc==3 && std::strcmp(argv[1],"--capture-objective")==0) {
             bomb_ptr=addr(bomb); put(bomb,offsets::m_bBombTicking,true); put(bomb,offsets::m_bBombDefused,false);
             put(bomb,offsets::m_bBeingDefused,true); put(bomb,offsets::m_flC4Blow,130.f);
