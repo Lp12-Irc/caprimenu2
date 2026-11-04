@@ -18,7 +18,7 @@ public:
     bool begin_frame(bool render_hidden=false,bool prepare_render=true);
     void prepare_frame();
     void end_frame();
-    void sync_to_game(); // reposition/resize to match game window
+    void sync_to_game();
     void set_interactive(bool enabled);
     void set_content_visible(bool enabled);
     bool visible() const { return visible_; }
@@ -27,10 +27,10 @@ public:
     int  width()        const { return w_; }
     int  height()       const { return h_; }
     HWND hwnd()         const { return hwnd_; }
-    uint64_t presents() const {return presents_;}
-    uint64_t placements() const {return placements_;}
-    uint64_t revision() const {return revision_;}
-    bool uses_composition() const {return composition_;}
+    uint64_t presents()   const { return presents_; }
+    uint64_t placements() const { return placements_; }
+    uint64_t revision()   const { return revision_; }
+    bool uses_composition() const { return composition_; }
 
     ID3D11Device*        device()  const { return dev_; }
     ID3D11DeviceContext* context() const { return ctx_; }
@@ -46,22 +46,25 @@ private:
     HWND hwnd_        = nullptr;
     HWND target_hwnd_ = nullptr;
     IDXGISwapChain*         sc_  = nullptr;
-    IDCompositionDevice* composition_device_=nullptr;
-    IDCompositionTarget* composition_target_=nullptr;
-    IDCompositionVisual* composition_visual_=nullptr;
-    bool composition_=false;
+    IDCompositionDevice* composition_device_ = nullptr;
+    IDCompositionTarget* composition_target_ = nullptr;
+    IDCompositionVisual* composition_visual_ = nullptr;
+    bool composition_ = false;
     ID3D11Device*           dev_ = nullptr;
     ID3D11DeviceContext*    ctx_ = nullptr;
     ID3D11RenderTargetView* rtv_ = nullptr;
     int w_ = 1920, h_ = 1080;
-    bool interactive_ = false;
-    unsigned focus_attempts_=0;
-    ULONGLONG next_focus_=0;
-    bool visible_ = true;
-    bool content_visible_=true;
-    bool failed_ = false;
-    int x_=0,y_=0;
-    bool positioned_=false;
-    uint64_t presents_=0,placements_=0;
-    uint64_t revision_=0;
+    bool interactive_     = false;
+    unsigned focus_attempts_ = 0;
+    ULONGLONG next_focus_    = 0;
+    bool visible_         = true;
+    bool content_visible_ = true;
+    bool failed_          = false;
+    int x_ = 0, y_ = 0;
+    bool positioned_ = false;
+    uint64_t presents_ = 0, placements_ = 0;
+    uint64_t revision_ = 0;
+
+    // Nome de classe gerado em runtime — sem string fixa enumeravel pelo AC.
+    std::wstring class_name_;
 };
