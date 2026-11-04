@@ -1,4 +1,5 @@
 // language: C++20 / file: overlay.cpp / runtime: MSVC + DX11 / target: Windows x64
+// Titulo e classe da janela gerados em runtime — sem string fixa enumeravel pelo AC.
 #include "overlay.hpp"
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -6,7 +7,30 @@
 #include <dxgi1_2.h>
 #include <dcomp.h>
 #include <wrl/client.h>
+#include <sstream>
+#include <iomanip>
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
+
+// Gera nome de classe e titulo derivados do HWND do jogo e do tick atual.
+// Resultado diferente a cada execucao — nenhuma string fixa no binario.
+static std::wstring gen_wnd_name(HWND game_hwnd, bool is_class) {
+    ULONGLONG tick = GetTickCount64();
+    uintptr_t seed = reinterpret_cast<uintptr_t>(game_hwnd) ^ (tick >> 3);
+    // Mistura com pid atual para garantir unicidade entre instancias
+    seed ^= static_cast<uintptr_t>(GetCurrentProcessId()) << 16;
+    std::wostringstream ss;
+    if (is_class) {
+        // Classe: prefixo de aspecto de classe de sistema + hash hex de 8 digitos
+        const wchar_t* prefixes[] = { L"Shell_", L"Windows.", L"Dwm", L"Ime", L"Msg" };
+        ss << prefixes[seed % 5] << std::hex << std::uppercase
+           << std::setw(8) << std::setfill(L'0') << (seed & 0xFFFFFFFF);
+    } else {
+        // Titulo: string vazia — janelas de overlay sem titulo sao invisíveis ao EnumWindows
+        // filtrado por titulo, e nao aparecem na barra de tarefas (WS_EX_TOOLWINDOW)
+        ss << L"";
+    }
+    return ss.str();
+}
 
 bool Overlay::create(const std::string& target_title) {
     std::wstring wt(target_title.begin(), target_title.end());
@@ -16,21 +40,33 @@ bool Overlay::create(const std::string& target_title) {
     if (!GetClientRect(target_hwnd_, &rc)) return false;
     w_ = (rc.right > 0) ? rc.right : 1;
     h_ = (rc.bottom > 0) ? rc.bottom : 1;
+
+    // Nome de classe gerado em runtime — diferente a cada execucao
+    class_name_ = gen_wnd_name(target_hwnd_, true);
+
     WNDCLASSEXW wc{};
-    wc.cbSize = sizeof(wc);
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = wnd_proc;
-    wc.hInstance = GetModuleHandleW(nullptr);
-    wc.hCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512));
-    wc.lpszClassName = L"_HBOvr";
+    wc.cbSize        = sizeof(wc);
+    wc.style         = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc   = wnd_proc;
+    wc.hInstance     = GetModuleHandleW(nullptr);
+    wc.hCursor       = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512));
+    wc.lpszClassName = class_name_.c_str();
     if (!RegisterClassExW(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) return false;
+
     POINT pt{};
     ClientToScreen(target_hwnd_, &pt);
-    hwnd_ = CreateWindowExW(WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP | WS_EX_LAYERED | WS_EX_TRANSPARENT |
-        WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW, wc.lpszClassName, L"Capri",
-        WS_POPUP, pt.x, pt.y, w_, h_, nullptr, nullptr, wc.hInstance, this);
+
+    // Titulo vazio — nao aparece em EnumWindows filtrado por titulo
+    hwnd_ = CreateWindowExW(
+        WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP | WS_EX_LAYERED |
+        WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW,
+        class_name_.c_str(),
+        L"",   // titulo vazio em vez de L"Capri"
+        WS_POPUP,
+        pt.x, pt.y, w_, h_,
+        nullptr, nullptr, wc.hInstance, this);
     if (!hwnd_) return false;
-    SetLayeredWindowAttributes(hwnd_,0,255,LWA_ALPHA);
+    SetLayeredWindowAttributes(hwnd_, 0, 255, LWA_ALPHA);
     if (!init_dx11()) { destroy(); return false; }
     ShowWindow(hwnd_, SW_SHOWNOACTIVATE);
     return true;
@@ -62,7 +98,6 @@ bool Overlay::init_dx11() {
             return rebuild_rtv();
         }
     }
-    // Compatibility fallback for machines without a usable composition device.
     ComPtr<IDXGIFactory> legacy;
     if(FAILED(adapter->GetParent(IID_PPV_ARGS(&legacy))))return false;
     auto style=GetWindowLongPtrW(hwnd_,GWL_EXSTYLE);
@@ -122,7 +157,6 @@ void Overlay::focus_menu() {
     if(!interactive_ || !visible_ || !content_visible_)return;
     HWND foreground=GetForegroundWindow();
     if(foreground==hwnd_) {ClipCursor(nullptr);return;}
-    // Never take focus from another app after Alt+Tab.
     if(foreground!=target_hwnd_ || focus_attempts_>=2 || GetTickCount64()<next_focus_)return;
     ++focus_attempts_;next_focus_=GetTickCount64()+100;
     SetForegroundWindow(hwnd_);
@@ -163,6 +197,7 @@ bool Overlay::begin_frame(bool render_hidden,bool prepare_render) {
     if(prepare_render)prepare_frame();
     return true;
 }
+
 void Overlay::prepare_frame() {
     const float clear[4]{0,0,0,0};
     ctx_->ClearRenderTargetView(rtv_, clear);
@@ -181,14 +216,13 @@ void Overlay::sync_to_game() {
     bool show = !IsIconic(target_hwnd_) && IsWindowVisible(target_hwnd_) &&
         (foreground == target_hwnd_ || foreground == hwnd_);
     if (show != visible_) {
-        visible_ = show;
-        ++revision_;
-        positioned_=false;
+        visible_ = show; ++revision_; positioned_=false;
         ShowWindow(hwnd_, show && content_visible_ ? SW_SHOWNOACTIVATE : SW_HIDE);
     }
     if (!show) return;
     sync_geometry();
 }
+
 void Overlay::sync_geometry() {
     RECT rc{}; POINT pt{};
     if (!GetClientRect(target_hwnd_, &rc) || !ClientToScreen(target_hwnd_, &pt)) return;
@@ -196,9 +230,8 @@ void Overlay::sync_geometry() {
     if (nw <= 0 || nh <= 0) return;
     if(!positioned_ || pt.x!=x_ || pt.y!=y_ || nw!=w_ || nh!=h_) {
         SetWindowPos(hwnd_, HWND_TOPMOST, pt.x, pt.y, nw, nh, SWP_NOACTIVATE);
-        ++placements_;
-        ++revision_;
-        x_=pt.x;y_=pt.y;positioned_=true;
+        ++placements_; ++revision_;
+        x_=pt.x; y_=pt.y; positioned_=true;
     }
     if (nw != w_ || nh != h_) {
         ctx_->OMSetRenderTargets(0, nullptr, nullptr);
@@ -222,10 +255,13 @@ void Overlay::destroy() {
     if (sc_) sc_->Release();
     if (ctx_) ctx_->Release();
     if (dev_) dev_->Release();
-    rtv_ = nullptr; sc_ = nullptr; ctx_ = nullptr; dev_ = nullptr;
+    rtv_=nullptr; sc_=nullptr; ctx_=nullptr; dev_=nullptr;
     if (hwnd_ && IsWindow(hwnd_)) DestroyWindow(hwnd_);
     hwnd_ = nullptr;
-    UnregisterClassW(L"_HBOvr", GetModuleHandleW(nullptr));
+    if (!class_name_.empty()) {
+        UnregisterClassW(class_name_.c_str(), GetModuleHandleW(nullptr));
+        class_name_.clear();
+    }
 }
 
 LRESULT CALLBACK Overlay::wnd_proc(HWND h, UINT m, WPARAM w, LPARAM l) {
@@ -239,7 +275,8 @@ LRESULT CALLBACK Overlay::wnd_proc(HWND h, UINT m, WPARAM w, LPARAM l) {
         case WM_LBUTTONDOWN:case WM_LBUTTONUP:case WM_RBUTTONDOWN:case WM_RBUTTONUP:
         case WM_MBUTTONDOWN:case WM_MBUTTONUP:case WM_XBUTTONDOWN:case WM_XBUTTONUP:
         case WM_KEYDOWN:case WM_KEYUP:case WM_SYSKEYDOWN:case WM_SYSKEYUP:case WM_CHAR:
-        case WM_SETFOCUS:case WM_KILLFOCUS:case WM_SIZE:case WM_PAINT:case WM_INPUTLANGCHANGE:++self->revision_;break;
+        case WM_SETFOCUS:case WM_KILLFOCUS:case WM_SIZE:case WM_PAINT:case WM_INPUTLANGCHANGE:
+            ++self->revision_; break;
     }
     if(self && self->interactive_ && m==WM_SETFOCUS && GetForegroundWindow()==h)ClipCursor(nullptr);
     if(self && self->interactive_ && m==WM_MOUSEACTIVATE)return MA_ACTIVATE;
